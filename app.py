@@ -1,10 +1,5 @@
-# Habilita o suporte a widgets interativos no Google Colab
-from google.colab import output
-output.enable_custom_widget_manager()
 
-# Instala as bibliotecas necessárias
-!pip install requests pandas numpy plotly ipython widgetsnbextension > /dev/null 2>&1
-
+import streamlit as st
 import requests
 import pandas as pd
 import numpy as np
@@ -12,9 +7,15 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import time
 from datetime import datetime, timedelta
-from IPython.display import display, clear_output
-import ipywidgets as widgets
 
+# Configuração da página para ocupar a largura total (modo widescreen)
+st.set_page_config(
+    page_title="Hyperliquid - Stacks & Liquidações",
+    page_icon="📈",
+    layout="wide"
+)
+
+# Função para buscar dados da API da Hyperliquid
 def get_hyperliquid_data(target_asset="BTC"):
     try:
         url = "https://api.hyperliquid.xyz/info"
@@ -33,20 +34,22 @@ def get_hyperliquid_data(target_asset="BTC"):
     fallbacks = {"BTC": 81500.0, "ETH": 3200.0, "SOL": 200.0, "AVAX": 35.0, "XRP": 1.5, "SUI": 3.0, "DOGE": 0.25}
     return fallbacks.get(target_asset, 100.0), 50000.0
 
-# Contentor de saída para largura total e altura imponente
-out = widgets.Output(layout=widgets.Layout(height='800px', width='100%'))
+# Cabeçalho e Seletor de Ativos
+st.title("⚡ Hyperliquid - Painel de Stacks & Liquidações 50x/100x")
 
-# --- SELETOR DE ATIVOS INTERATIVO ---
-asset_selector = widgets.Dropdown(
-    options=['BTC', 'ETH', 'SOL', 'AVAX', 'XRP', 'SUI', 'DOGE'],
-    value='BTC',
-    description='Ativo:',
-    disabled=False,
-)
+col1, col2 = st.columns([2, 5])
+with col1:
+    selected_symbol = st.selectbox(
+        "Selecione o Ativo:",
+        options=['BTC', 'ETH', 'SOL', 'AVAX', 'XRP', 'SUI', 'DOGE'],
+        index=0
+    )
 
-display(asset_selector, out)
+# Contentor para o gráfico
+chart_placeholder = st.empty()
 
-def build_figure_data(symbol):
+# Função para construir a figura do Plotly
+def build_dashboard(symbol):
     price, oi = get_hyperliquid_data(symbol)
     if not price:
         price = 100.0
@@ -90,7 +93,6 @@ def build_figure_data(symbol):
     hover_longs = [f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" for p, v5, v1 in zip(df_longs["Preco"], df_longs["Vol_Base"], df_longs["Vol_Extrema"])]
     hover_shorts = [f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" for p, v5, v1 in zip(df_shorts["Preco"], df_shorts["Vol_Base"], df_shorts["Vol_Extrema"])]
     
-    # --- CORES CALIBRADAS IDÊNTICAS AO ORIGINAL ---
     COLOR_BASE_AZUL = "#1E88E5"
     COLOR_EXTREMA = "#FF7043"
     
@@ -99,7 +101,6 @@ def build_figure_data(symbol):
     fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
     fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
     
-    # Marcadores de grandes players liquidados
     fig.add_trace(go.Scatter(
         x=df_hist["price"], y=(df_hist["size"] * 0.3) + 3.0,
         mode="markers+text",
@@ -136,12 +137,12 @@ def build_figure_data(symbol):
         
     fig.update_layout(
         title=dict(
-            text=f"Hyperliquid - Stacks & Liquidações | Ativo: {symbol} | Preço Atual: US$ {price:,.2f}<br><sup>Status de Médio Prazo: <b>{bias}</b> (Desequilíbrio: {diff_pct:+.1f}%)</sup>"
+            text=f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}<br><sup>Status de Médio Prazo: <b>{bias}</b> (Desequilíbrio: {diff_pct:+.1f}%)</sup>"
         ),
-        barmode='stack', template="plotly_dark", height=780, autosize=True,
+        barmode='stack', template="plotly_dark", height=750, autosize=True,
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        margin=dict(t=100, b=20, l=40, r=40)
+        margin=dict(t=80, b=20, l=40, r=40)
     )
     
     fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True)
@@ -149,88 +150,12 @@ def build_figure_data(symbol):
     fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
     fig.update_yaxes(title_text="Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
     
-    return fig, df_longs, df_shorts, price
+    return fig
 
-# Inicialização
-current_active_symbol = asset_selector.value
-fig, df_longs, df_shorts, price = build_figure_data(current_active_symbol)
+# Renderiza e atualiza o gráfico
+fig = build_dashboard(selected_symbol)
+chart_placeholder.plotly_chart(fig, use_container_width=True)
 
-with out:
-    clear_output(wait=True)
-    w = go.FigureWidget(fig)
-    display(w)
-
-# Loop unificado de tempo real e troca de ativo
-try:
-    while True:
-        time.sleep(3)
-        selected_symbol = asset_selector.value
-        
-        if selected_symbol != current_active_symbol:
-            current_active_symbol = selected_symbol
-            fig, df_longs, df_shorts, price = build_figure_data(current_active_symbol)
-            with out:
-                clear_output(wait=True)
-                w = go.FigureWidget(fig)
-                display(w)
-            continue
-            
-        fig, df_longs, df_shorts, price = build_figure_data(current_active_symbol)
-        step_size = price * 0.0012
-        
-        hover_longs = [f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" for p, v5, v1 in zip(df_longs["Preco"], df_longs["Vol_Base"], df_longs["Vol_Extrema"])]
-        hover_shorts = [f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" for p, v5, v1 in zip(df_shorts["Preco"], df_shorts["Vol_Base"], df_shorts["Vol_Extrema"])]
-        
-        cum_long_y = np.cumsum(df_longs["Vol_Base"] + df_longs["Vol_Extrema"])[::-1]
-        cum_short_y = np.cumsum(df_shorts["Vol_Base"] + df_shorts["Vol_Extrema"])
-        
-        total_long_vol = sum(df_longs["Vol_Base"] + df_longs["Vol_Extrema"])
-        total_short_vol = sum(df_shorts["Vol_Base"] + df_shorts["Vol_Extrema"])
-        diff_pct = ((total_short_vol - total_long_vol) / (total_short_vol + total_long_vol)) * 100
-        
-        if diff_pct > 3:
-            bias = "🟢 VIÉS ALTISTA (Forte Pressão de Short Squeeze)"
-        elif diff_pct < -3:
-            bias = "🔴 VIÉS BAIXISTA (Risco de Long Cascade / Queda)"
-        else:
-            bias = "⚪ MERCADO EQUILIBRADO"
-            
-        new_title = (
-            f"Hyperliquid - Stacks & Liquidações | Ativo: {current_active_symbol} | Preço Atual: US$ {price:,.2f}"
-            f"<br><sup>Status de Médio Prazo: <b>{bias}</b> (Desequilíbrio: {diff_pct:+.1f}%)</sup>"
-        )
-        
-        with w.batch_update():
-            w.data[0].x = df_longs["Preco"]
-            w.data[0].y = df_longs["Vol_Base"]
-            w.data[0].hovertemplate = hover_longs
-            
-            w.data[1].x = df_longs["Preco"]
-            w.data[1].y = df_longs["Vol_Extrema"]
-            w.data[1].hovertemplate = hover_longs
-            
-            w.data[2].x = df_shorts["Preco"]
-            w.data[2].y = df_shorts["Vol_Base"]
-            w.data[2].hovertemplate = hover_shorts
-            
-            w.data[3].x = df_shorts["Preco"]
-            w.data[3].y = df_shorts["Vol_Extrema"]
-            w.data[3].hovertemplate = hover_shorts
-            
-            w.data[5].x = df_longs["Preco"]
-            w.data[5].y = cum_long_y
-            w.data[6].x = df_shorts["Preco"]
-            w.data[6].y = cum_short_y
-            
-            w.layout.shapes[0].x0 = price
-            w.layout.shapes[0].x1 = price
-            w.layout.shapes[1].x0 = price
-            w.layout.shapes[1].x1 = price
-            
-            w.layout.annotations[0].x = price
-            w.layout.annotations[1].x = price
-            w.layout.annotations[1].text = f"<b>agora {price:,.0f}</b>"
-            w.layout.title.text = new_title
-            
-except KeyboardInterrupt:
-    print("Monitor encerrado.")
+# Atualização automática no Streamlit
+time.sleep(3)
+st.rerun()
