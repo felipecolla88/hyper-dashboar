@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 import pandas as pd
@@ -45,11 +44,9 @@ with col1:
         index=0
     )
 
-# Contentor para o gráfico
-chart_placeholder = st.empty()
-
-# Função para construir a figura do Plotly
-def build_dashboard(symbol):
+# Função de fragmento com atualização automática a cada 3 segundos (sem piscar a página inteira)
+@st.fragment(run_every=3)
+def render_live_chart(symbol):
     price, oi = get_hyperliquid_data(symbol)
     if not price:
         price = 100.0
@@ -150,12 +147,7 @@ def build_dashboard(symbol):
     fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
     fig.update_yaxes(title_text="Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
     
-    return fig
+    st.plotly_chart(fig, use_container_width=True)
 
-# Renderiza e atualiza o gráfico
-fig = build_dashboard(selected_symbol)
-chart_placeholder.plotly_chart(fig, use_container_width=True)
-
-# Atualização automática no Streamlit
-time.sleep(3)
-st.rerun()
+# Executa o fragmento interativo na página
+render_live_chart(selected_symbol)
