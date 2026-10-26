@@ -138,14 +138,14 @@ with tab1:
         fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True)
         fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True)
         fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
-        fig.update_yaxes(title_text="Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
+        fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
         
         st.plotly_chart(fig, use_container_width=True)
 
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book Horizontal Amplo)
+# ABA 2: ORDENS LIMITE (Book Estilo Augusto Backs)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -155,39 +155,52 @@ with tab2:
             price = 100.0
             
         np.random.seed(int(time.time() // 5))
-        # Amplia o passo e o range para abranger uma faixa ampla de preços (estilo Augusto Backs)
-        step_size = price * 0.018
+        step_size = price * 0.015
         
-        # 40 níveis cobrindo uma amplitude vasta acima e abaixo
-        price_levels = [price + (i * step_size) for i in range(-20, 21)]
+        # 16 níveis selecionados estrategicamente para manter a visualização limpa e legível (como no original)
+        price_levels = [price + (i * step_size) for i in range(-8, 9)]
         price_levels.sort()
         
         volumes = []
-        labels_right = []
+        annotations_list = []
+        
         for p in price_levels:
             dist = abs(p - price)
-            vol = round(np.random.uniform(30.0, 160.0) if dist < price*0.08 else np.random.uniform(8.0, 45.0), 1)
+            vol = round(np.random.uniform(40.0, 150.0) if dist < price*0.06 else np.random.uniform(10.0, 45.0), 1)
             volumes.append(vol)
             
             p_min = p - (step_size / 2)
             p_max = p + (step_size / 2)
-            labels_right.append(f"{p_min:,.0f}–{p_max:,.0f}<br><b>US$ {vol:,.1f} mi</b>")
+            
+            # Adiciona anotações laterais limpas (estilo linhas indicativas do Augusto Backs)
+            annotations_list.append(dict(
+                xref='paper', yref='y',
+                x=1.02, y=p,
+                text=f"<b>{p_min:,.0f}–{p_max:,.0f}</b><br>US$ {vol:,.1f} mi",
+                showarrow=True,
+                arrowhead=0,
+                arrowdash="dot",
+                arrowcolor="rgba(255,255,255,0.3)",
+                ax=40, ay=0,
+                align="left",
+                font=dict(color="white", size=10)
+            ))
 
-        df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_right})
+        df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes})
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
         
+        # Barras limpas sem texto poluindo em cima
         fig_lim.add_trace(go.Bar(
             y=df_limits["Preco"],
             x=df_limits["Volume"],
             orientation='h',
             marker_color=colors,
-            text=df_limits["Label"],
-            textposition='outside',
-            hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume: US$ %{x} mi<extra></extra>"
+            hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
         ))
         
+        # Linha marcadora do preço atual
         fig_lim.add_hline(
             y=price, 
             line_dash="dash", 
@@ -198,11 +211,11 @@ with tab2:
         )
         
         fig_lim.update_layout(
-            title=dict(text=f"Muralhas de Ordens Limite (Amplitude Ampla) | Ativo: {symbol} (Preço: US$ {price:,.2f})"),
+            title=dict(text=f"Muralhas de Ordens Limite (Book de Ofertas) | Ativo: {symbol} (Preço: US$ {price:,.2f})"),
             template="plotly_dark",
-            height=850,  # Altura aumentada para acomodar perfeitamente os múltiplos níveis de preço
+            height=800,
             xaxis=dict(
-                title="Volume (US$ Milhões)", 
+                title="Volume Acumulado (US$ Milhões)", 
                 showgrid=True, 
                 gridcolor="rgba(255,255,255,0.05)"
             ),
@@ -213,10 +226,12 @@ with tab2:
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.03)"
             ),
-            margin=dict(t=80, b=40, l=40, r=140),
+            margin=dict(t=80, b=40, l=40, r=180), # Margem direita alargada para acomodar perfeitamente as legendas laterais
+            annotations=annotations_list,
             showlegend=False
         )
         
         st.plotly_chart(fig_lim, use_container_width=True)
 
     render_limit_orders_chart(selected_symbol)
+    
