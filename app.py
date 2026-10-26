@@ -145,7 +145,7 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book)
+# ABA 2: ORDENS LIMITE (Book Horizontal)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -155,28 +155,29 @@ with tab2:
             price = 100.0
             
         np.random.seed(int(time.time() // 5))
-        step_size = price * 0.009
+        step_size = price * 0.0035
         
-        price_levels = [price + (i * step_size) for i in range(-5, 6)]
+        # 25 faixas de preço para detalhar bem o book (como no original)
+        price_levels = [price + (i * step_size) for i in range(-12, 13)]
         price_levels.sort()
         
         volumes = []
         labels_right = []
         for p in price_levels:
             dist = abs(p - price)
-            vol = round(np.random.uniform(30.0, 140.0) if dist < price*0.03 else np.random.uniform(10.0, 50.0), 1)
+            vol = round(np.random.uniform(25.0, 130.0) if dist < price*0.015 else np.random.uniform(5.0, 35.0), 1)
             volumes.append(vol)
             
             p_min = p - (step_size / 2)
             p_max = p + (step_size / 2)
-            labels_right.append(f"US$ {vol:,.1f} mi<br>{p_min:,.0f}-{p_max:,.0f}")
+            labels_right.append(f"{p_min:,.0f}–{p_max:,.0f}<br><b>US$ {vol:,.1f} mi</b>")
 
         df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_right})
+        # Cores fiéis: Azul abaixo do preço (compras/suporte) e Vermelho/Laranja acima (vendas/resistência)
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
         
-        # Usamos valores numéricos diretos para o eixo Y e formatamos os rótulos de texto
         fig_lim.add_trace(go.Bar(
             y=df_limits["Preco"],
             x=df_limits["Volume"],
@@ -184,29 +185,36 @@ with tab2:
             marker_color=colors,
             text=df_limits["Label"],
             textposition='outside',
-            hovertemplate="Faixa de Preço: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
+            hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume: US$ %{x} mi<extra></extra>"
         ))
         
+        # Linha pontilhada exata para o preço "agora"
         fig_lim.add_hline(
             y=price, 
             line_dash="dash", 
             line_color="white",
-            annotation_text=f"<b>agora {price:,.0f}</b>",
+            annotation_text=f"<b>agora</b><br>{price:,.0f}",
             annotation_position="bottom right",
-            annotation_font=dict(color="white", size=12)
+            annotation_font=dict(color="white", size=11)
         )
         
         fig_lim.update_layout(
-            title=dict(text=f"Muralhas de Ordens Limite por Faixa de Preço | Ativo: {symbol} (Preço: US$ {price:,.2f})"),
-            template="plotly_dark",
-            height=720,
-            xaxis=dict(title="Volume Acumulado (US$ Milhões)", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
-            yaxis=dict(
-                title="Faixas de Preço (US$)", 
-                autorange="reversed",
-                tickformat=",f"
+            title=dict(text=f"Ordens Limite & Livro de Ofertas | Ativo: {symbol} (Preço: US$ {price:,.2f})"),
+            template="plotly_dark",  # Fundo escuro idêntico ao original
+            height=750,
+            xaxis=dict(
+                title="Volume (US$ Milhões)", 
+                showgrid=True, 
+                gridcolor="rgba(255,255,255,0.05)"
             ),
-            margin=dict(t=80, b=40, l=100, r=120),
+            yaxis=dict(
+                title="", 
+                autorange="reversed", # Mantém o preço mais alto em cima e o mais baixo em baixo
+                tickformat=",f",
+                showgrid=True,
+                gridcolor="rgba(255,255,255,0.03)"
+            ),
+            margin=dict(t=80, b=40, l=40, r=140),
             showlegend=False
         )
         
