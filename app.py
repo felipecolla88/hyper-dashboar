@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS avançado para forçar o fundo escuro absoluto em toda a interface do Streamlit
+# Estilo CSS avançado para forçar o fundo escuro absoluto em toda a interface
 st.markdown("""
     <style>
     .stApp {
@@ -161,19 +161,19 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book com Fundo Escuro Absoluto e Leitura Perfeita)
+# ABA 2: ORDENS LIMITE (Book com Amplitude Gigante de 45k a 150k)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
     def render_limit_orders_chart(symbol):
         price, oi = get_hyperliquid_data(symbol)
         if not price:
-            price = 100.0
+            price = 80000.0
             
         np.random.seed(int(time.time() // 5))
-        step_size = price * 0.008
         
-        price_levels = [price + (i * step_size) for i in range(-12, 13)]
+        # Cria uma grade ampla cobrindo desde os 45.000 até aos 150.000 em passos de 3.500
+        price_levels = list(range(45000, 151000, 3500))
         price_levels.sort()
         
         volumes = []
@@ -181,19 +181,21 @@ with tab2:
         
         for p in price_levels:
             dist = abs(p - price)
-            vol = round(np.random.uniform(35.0, 145.0) if dist < price*0.04 else np.random.uniform(8.0, 35.0), 1)
+            # Maiores muralhas perto do preço atual e volumes distribuídos ao longo da grade
+            vol = round(np.random.uniform(40.0, 160.0) if dist < 12000 else np.random.uniform(8.0, 45.0), 1)
             volumes.append(vol)
             
-            p_min = p - (step_size / 2)
-            p_max = p + (step_size / 2)
+            p_min = p - 1750
+            p_max = p + 1750
             labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.0f}–{p_max:,.0f})")
 
         df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
+        
+        # Cores: Azul para preços abaixo do atual (suportes) e Laranja para preços acima (resistências)
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
         
-        # Exibe os valores e faixas perfeitamente legíveis na ponta externa de cada barra
         fig_lim.add_trace(go.Bar(
             y=df_limits["Preco"],
             x=df_limits["Volume"],
@@ -201,7 +203,7 @@ with tab2:
             marker_color=colors,
             text=df_limits["Label"],
             textposition='outside',
-            textfont=dict(color="#ffffff", size=11),
+            textfont=dict(color="#ffffff", size=10),
             hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
         ))
         
@@ -215,26 +217,27 @@ with tab2:
         )
         
         fig_lim.update_layout(
-            title=dict(text=f"Muralhas de Ordens Limite (Book de Ofertas) | Ativo: {symbol}", font=dict(color="white")),
+            title=dict(text=f"Muralhas de Ordens Limite (Amplitude Completa 45k–150k) | Ativo: {symbol}", font=dict(color="white")),
             template="plotly_dark",
-            paper_bgcolor="#0e1117",  # Fundo escuro absoluto fora do gráfico
-            plot_bgcolor="#0e1117",   # Fundo escuro absoluto dentro da área do gráfico
-            height=850,
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            height=950,  # Altura expandida para acomodar perfeitamente todos os níveis de 45k a 150k
             xaxis=dict(
                 title="Volume Acumulado (US$ Milhões)", 
                 showgrid=True, 
                 gridcolor="rgba(255,255,255,0.05)",
-                range=[0, 190]  # Garante espaço ideal para ler os textos nas pontas
+                range=[0, 200]
             ),
             yaxis=dict(
-                title="", 
+                title="Faixas de Preço (US$)", 
                 autorange="reversed",
                 tickformat=",f",
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.03)",
-                tickfont=dict(color="white")
+                tickfont=dict(color="white"),
+                range=[152000, 43000] # Força o eixo vertical a abranger exatamente de 45k a 150k
             ),
-            margin=dict(t=80, b=40, l=40, r=60),
+            margin=dict(t=80, b=40, l=60, r=80),
             showlegend=False
         )
         
