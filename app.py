@@ -7,12 +7,22 @@ from plotly.subplots import make_subplots
 import time
 from datetime import datetime, timedelta
 
-# Configuração da página para ocupar a largura total (modo widescreen)
+# Configuração da página e forçamento do tema escuro global via CSS
 st.set_page_config(
     page_title="Hyperliquid - Painel Quantitativo",
     page_icon="⚡",
     layout="wide"
 )
+
+# Estilo CSS personalizado para garantir fundo totalmente escuro na página inteira
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0e1117;
+        color: #fafafa;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Função para buscar dados da API da Hyperliquid
 def get_hyperliquid_data(target_asset="BTC"):
@@ -145,7 +155,7 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book Estilo Profissional Augusto Backs)
+# ABA 2: ORDENS LIMITE (Book Estilo Augusto Backs)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -157,14 +167,12 @@ with tab2:
         np.random.seed(int(time.time() // 5))
         step_size = price * 0.008
         
-        # 24 níveis cobrindo uma amplitude rica para cima e para baixo
         price_levels = [price + (i * step_size) for i in range(-12, 13)]
         price_levels.sort()
         
         volumes = []
         annotations_list = []
         
-        # Adiciona a marcação central do preço atual ("agora") com linha tracejada e anotação lateral
         annotations_list.append(dict(
             x=1.0, y=price,
             xref='paper', yref='y',
@@ -186,7 +194,6 @@ with tab2:
             p_min = p - (step_size / 2)
             p_max = p + (step_size / 2)
             
-            # Seleciona alguns níveis-chave para exibir as anotações laterais detalhadas (estilo Augusto Backs)
             if abs(p - price) > price * 0.015:
                 annotations_list.append(dict(
                     x=1.0, y=p,
@@ -202,7 +209,6 @@ with tab2:
                 ))
 
         df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes})
-        # Cores fiéis: Azul para o suporte/compras abaixo do preço, Laranja para resistências/vendas acima
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
@@ -237,7 +243,7 @@ with tab2:
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.03)"
             ),
-            margin=dict(t=80, b=40, l=40, r=200),  # Margem lateral generosa para acomodar as caixas de texto com setas
+            margin=dict(t=80, b=40, l=40, r=200),
             annotations=annotations_list,
             showlegend=False
         )
