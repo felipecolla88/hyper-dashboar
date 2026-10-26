@@ -101,7 +101,7 @@ with tab1:
         
         fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Base"], marker_color=COLOR_BASE_AZUL, name="Alavancagem Normal/Média", hovertemplate=hover_longs), row=1, col=1)
         fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Extrema"], marker_color=COLOR_EXTREMA, name="Alavancagem Extrema", hovertemplate=hover_longs), row=1, col=1)
-        fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
+        fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_EXTREMA, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
         fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
         
         fig.add_trace(go.Scatter(
@@ -145,7 +145,7 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book Estilo Augusto Backs)
+# ABA 2: ORDENS LIMITE (Book com Rótulos Externos Limpos)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -157,12 +157,12 @@ with tab2:
         np.random.seed(int(time.time() // 5))
         step_size = price * 0.015
         
-        # 16 níveis selecionados estrategicamente para manter a visualização limpa e legível (como no original)
+        # 16 níveis limpos e bem distribuídos
         price_levels = [price + (i * step_size) for i in range(-8, 9)]
         price_levels.sort()
         
         volumes = []
-        annotations_list = []
+        labels_text = []
         
         for p in price_levels:
             dist = abs(p - price)
@@ -171,41 +171,30 @@ with tab2:
             
             p_min = p - (step_size / 2)
             p_max = p + (step_size / 2)
-            
-            # Adiciona anotações laterais limpas (estilo linhas indicativas do Augusto Backs)
-            annotations_list.append(dict(
-                xref='paper', yref='y',
-                x=1.02, y=p,
-                text=f"<b>{p_min:,.0f}–{p_max:,.0f}</b><br>US$ {vol:,.1f} mi",
-                showarrow=True,
-                arrowhead=0,
-                arrowdash="dot",
-                arrowcolor="rgba(255,255,255,0.3)",
-                ax=40, ay=0,
-                align="left",
-                font=dict(color="white", size=10)
-            ))
+            labels_text.append(f"{p_min:,.0f}–{p_max:,.0f} | US$ {vol:,.1f} mi")
 
-        df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes})
+        df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
         
-        # Barras limpas sem texto poluindo em cima
+        # Coloca o texto diretamente na ponta externa da barra de forma limpa
         fig_lim.add_trace(go.Bar(
             y=df_limits["Preco"],
             x=df_limits["Volume"],
             orientation='h',
             marker_color=colors,
+            text=df_limits["Label"],
+            textposition='outside',
+            textfont=dict(color="white", size=10),
             hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
         ))
         
-        # Linha marcadora do preço atual
         fig_lim.add_hline(
             y=price, 
             line_dash="dash", 
             line_color="white",
-            annotation_text=f"<b>agora</b><br>{price:,.0f}",
+            annotation_text=f"<b>agora {price:,.0f}</b>",
             annotation_position="bottom right",
             annotation_font=dict(color="white", size=11)
         )
@@ -217,7 +206,8 @@ with tab2:
             xaxis=dict(
                 title="Volume Acumulado (US$ Milhões)", 
                 showgrid=True, 
-                gridcolor="rgba(255,255,255,0.05)"
+                gridcolor="rgba(255,255,255,0.05)",
+                range=[0, 220] # Alarga o eixo X para dar folga aos textos nas pontas das barras
             ),
             yaxis=dict(
                 title="", 
@@ -226,12 +216,10 @@ with tab2:
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.03)"
             ),
-            margin=dict(t=80, b=40, l=40, r=180), # Margem direita alargada para acomodar perfeitamente as legendas laterais
-            annotations=annotations_list,
+            margin=dict(t=80, b=40, l=40, r=160),
             showlegend=False
         )
         
         st.plotly_chart(fig_lim, use_container_width=True)
 
     render_limit_orders_chart(selected_symbol)
-    
