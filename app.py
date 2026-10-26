@@ -176,18 +176,19 @@ with tab2:
         
         fig_lim = go.Figure()
         
+        # Usamos valores numéricos diretos para o eixo Y e formatamos os rótulos de texto
         fig_lim.add_trace(go.Bar(
-            y=[f"US$ {p:,.0f}" for p in df_limits["Preco"]],
+            y=df_limits["Preco"],
             x=df_limits["Volume"],
             orientation='h',
             marker_color=colors,
             text=df_limits["Label"],
             textposition='outside',
-            hovertemplate="Faixa de Preço: US$ %{y}<br>Volume Limite: US$ %{x} mi<extra></extra>"
+            hovertemplate="Faixa de Preço: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
         ))
         
         fig_lim.add_hline(
-            y=f"US$ {price:,.0f}", 
+            y=price, 
             line_dash="dash", 
             line_color="white",
             annotation_text=f"<b>agora {price:,.0f}</b>",
@@ -200,7 +201,11 @@ with tab2:
             template="plotly_dark",
             height=720,
             xaxis=dict(title="Volume Acumulado (US$ Milhões)", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
-            yaxis=dict(title="Faixas de Preço", autorange="reversed"),
+            yaxis=dict(
+                title="Faixas de Preço (US$)", 
+                autorange="reversed",
+                tickformat=",f"
+            ),
             margin=dict(t=80, b=40, l=100, r=120),
             showlegend=False
         )
