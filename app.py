@@ -161,7 +161,7 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book com Amplitude Gigante de 45k a 150k)
+# ABA 2: ORDENS LIMITE (Book de 20k a 200k)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -172,26 +172,26 @@ with tab2:
             
         np.random.seed(int(time.time() // 5))
         
-        # Cria uma grade ampla cobrindo desde os 45.000 até aos 150.000 em passos de 3.500
-        price_levels = list(range(45000, 151000, 3500))
+        # Grade abrangendo de 20.000 a 200.000 em passos de 6.000
+        step_val = 6000
+        price_levels = list(range(20000, 206000, step_val))
         price_levels.sort()
         
         volumes = []
         labels_text = []
         
+        half_step = step_val // 2
         for p in price_levels:
             dist = abs(p - price)
-            # Maiores muralhas perto do preço atual e volumes distribuídos ao longo da grade
-            vol = round(np.random.uniform(40.0, 160.0) if dist < 12000 else np.random.uniform(8.0, 45.0), 1)
+            vol = round(np.random.uniform(40.0, 160.0) if dist < 15000 else np.random.uniform(8.0, 45.0), 1)
             volumes.append(vol)
             
-            p_min = p - 1750
-            p_max = p + 1750
+            p_min = p - half_step
+            p_max = p + half_step
             labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.0f}–{p_max:,.0f})")
 
         df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
         
-        # Cores: Azul para preços abaixo do atual (suportes) e Laranja para preços acima (resistências)
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
@@ -217,16 +217,16 @@ with tab2:
         )
         
         fig_lim.update_layout(
-            title=dict(text=f"Muralhas de Ordens Limite (Amplitude Completa 45k–150k) | Ativo: {symbol}", font=dict(color="white")),
+            title=dict(text=f"Muralhas de Ordens Limite (Amplitude 20k–200k) | Ativo: {symbol}", font=dict(color="white")),
             template="plotly_dark",
             paper_bgcolor="#0e1117",
             plot_bgcolor="#0e1117",
-            height=950,  # Altura expandida para acomodar perfeitamente todos os níveis de 45k a 150k
+            height=1000,  # Altura expandida para acomodar confortavelmente todos os níveis
             xaxis=dict(
                 title="Volume Acumulado (US$ Milhões)", 
                 showgrid=True, 
                 gridcolor="rgba(255,255,255,0.05)",
-                range=[0, 200]
+                range=[0, 210]
             ),
             yaxis=dict(
                 title="Faixas de Preço (US$)", 
@@ -235,7 +235,7 @@ with tab2:
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.03)",
                 tickfont=dict(color="white"),
-                range=[152000, 43000] # Força o eixo vertical a abranger exatamente de 45k a 150k
+                range=[205000, 15000] # Força o eixo vertical a abranger exatamente de 20k a 200k
             ),
             margin=dict(t=80, b=40, l=60, r=80),
             showlegend=False
