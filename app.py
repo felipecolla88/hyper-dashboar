@@ -173,13 +173,13 @@ with tab2:
         volumes = []
         annotations_list = []
         
+        # Anotação principal para o preço atual
         annotations_list.append(dict(
             x=1.0, y=price,
             xref='paper', yref='y',
             text=f"<b>agora</b><br>US$ {price:,.2f}",
             showarrow=True,
-            arrowhead=0,
-            arrowdash="dash",
+            arrowhead=2,
             arrowcolor="white",
             ax=60, ay=0,
             align="left",
@@ -201,7 +201,6 @@ with tab2:
                     text=f"{p_min:,.0f}–{p_max:,.0f}<br><b>US$ {vol:,.1f} mi</b>",
                     showarrow=True,
                     arrowhead=0,
-                    arrowdash="dot",
                     arrowcolor="rgba(255,255,255,0.2)",
                     ax=60, ay=0,
                     align="left",
