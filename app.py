@@ -161,37 +161,42 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book de 20k a 200k)
+# ABA 2: ORDENS LIMITE (Book Dinâmico: -50% a +100% do Preço Atual)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
     def render_limit_orders_chart(symbol):
         price, oi = get_hyperliquid_data(symbol)
         if not price:
-            price = 80000.0
+            price = 100.0
             
         np.random.seed(int(time.time() // 5))
         
-        # Grade abrangendo de 20.000 a 200.000 em passos de 6.000
-        step_val = 6000
-        price_levels = list(range(20000, 206000, step_val))
+        # Intervalo dinâmico: de 50% abaixo até 100% acima do preço atual
+        min_price = price * 0.50
+        max_price = price * 2.00
+        
+        # Divide em 20 faixas perfeitas para qualquer ativo (seja BTC a 80k ou ETH a 3k)
+        num_steps = 20
+        step_val = (max_price - min_price) / num_steps
+        
+        price_levels = [min_price + (i * step_val) for i in range(num_steps + 1)]
         price_levels.sort()
         
         volumes = []
         labels_text = []
         
-        half_step = step_val // 2
+        half_step = step_val / 2
         for p in price_levels:
             dist = abs(p - price)
-            vol = round(np.random.uniform(40.0, 160.0) if dist < 15000 else np.random.uniform(8.0, 45.0), 1)
+            vol = round(np.random.uniform(35.0, 150.0) if dist < (price * 0.15) else np.random.uniform(8.0, 40.0), 1)
             volumes.append(vol)
             
             p_min = p - half_step
             p_max = p + half_step
-            labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.0f}–{p_max:,.0f})")
+            labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.2f}–{p_max:,.2f})")
 
         df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
-        
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
@@ -217,11 +222,11 @@ with tab2:
         )
         
         fig_lim.update_layout(
-            title=dict(text=f"Muralhas de Ordens Limite (Amplitude 20k–200k) | Ativo: {symbol}", font=dict(color="white")),
+            title=dict(text=f"Muralhas de Ordens Limite (Dinâmico -50% a +100%) | Ativo: {symbol}", font=dict(color="white")),
             template="plotly_dark",
             paper_bgcolor="#0e1117",
             plot_bgcolor="#0e1117",
-            height=1000,  # Altura expandida para acomodar confortavelmente todos os níveis
+            height=900,
             xaxis=dict(
                 title="Volume Acumulado (US$ Milhões)", 
                 showgrid=True, 
@@ -235,7 +240,7 @@ with tab2:
                 showgrid=True,
                 gridcolor="rgba(255,255,255,0.03)",
                 tickfont=dict(color="white"),
-                range=[205000, 15000] # Força o eixo vertical a abranger exatamente de 20k a 200k
+                range=[max_price + (step_val * 0.5), min_price - (step_val * 0.5)] # Adapta perfeitamente ao ativo selecionado
             ),
             margin=dict(t=80, b=40, l=60, r=80),
             showlegend=False
