@@ -33,7 +33,7 @@ def get_hyperliquid_data(target_asset="BTC"):
     fallbacks = {"BTC": 81500.0, "ETH": 3200.0, "SOL": 200.0, "AVAX": 35.0, "XRP": 1.5, "SUI": 3.0, "DOGE": 0.25}
     return fallbacks.get(target_asset, 100.0), 50000.0
 
-# Cabeçalho Principal e Seleção de Abas
+# Cabeçalho Principal e Seleção de Ativos
 st.title("⚡ Hyperliquid - Painel Quantitativo Profissional")
 
 col1, col2 = st.columns([2, 5])
@@ -48,7 +48,7 @@ with col1:
 tab1, tab2 = st.tabs(["📊 Stacks & Liquidações", "🧱 Ordens Limite (Book)"])
 
 # ==========================================
-# ABA 1: STACKS & LIQUIDAÇÕES (Ferramenta Anterior)
+# ABA 1: STACKS & LIQUIDAÇÕES
 # ==========================================
 with tab1:
     @st.fragment(run_every=3)
@@ -145,7 +145,7 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Nova Ferramenta Horizontal)
+# ABA 2: ORDENS LIMITE (Book)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -157,7 +157,6 @@ with tab2:
         np.random.seed(int(time.time() // 5))
         step_size = price * 0.009
         
-        # 10 faixas de preço (5 abaixo e 5 acima, estilo imagem de ordens limite)
         price_levels = [price + (i * step_size) for i in range(-5, 6)]
         price_levels.sort()
         
@@ -165,7 +164,7 @@ with tab2:
         labels_right = []
         for p in price_levels:
             dist = abs(p - price)
-            vol = round(np.uniform(30.0, 140.0) if dist < price*0.03 else np.uniform(10.0, 50.0), 1)
+            vol = round(np.random.uniform(30.0, 140.0) if dist < price*0.03 else np.random.uniform(10.0, 50.0), 1)
             volumes.append(vol)
             
             p_min = p - (step_size / 2)
@@ -173,13 +172,10 @@ with tab2:
             labels_right.append(f"US$ {vol:,.1f} mi<br>{p_min:,.0f}-{p_max:,.0f}")
 
         df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_right})
-        
-        # Cores: Azul para abaixo do preço (suportes/compras) e Laranja/Vermelho para acima (resistências/vendas)
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
         
-        # Gráfico de barras horizontais
         fig_lim.add_trace(go.Bar(
             y=[f"US$ {p:,.0f}" for p in df_limits["Preco"]],
             x=df_limits["Volume"],
@@ -190,7 +186,6 @@ with tab2:
             hovertemplate="Faixa de Preço: US$ %{y}<br>Volume Limite: US$ %{x} mi<extra></extra>"
         ))
         
-        # Linha horizontal indicando o preço atual ("agora")
         fig_lim.add_hline(
             y=f"US$ {price:,.0f}", 
             line_dash="dash", 
