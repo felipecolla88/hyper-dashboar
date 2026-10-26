@@ -7,20 +7,21 @@ from plotly.subplots import make_subplots
 import time
 from datetime import datetime, timedelta
 
-# Configuração da página e forçamento do tema escuro global via CSS
+# Configuração da página e layout widescreen
 st.set_page_config(
     page_title="Hyperliquid - Painel Quantitativo",
     page_icon="⚡",
     layout="wide"
 )
 
-# Estilo CSS personalizado para garantir fundo totalmente escuro na página inteira
+# Estilo CSS avançado para forçar o fundo escuro absoluto em toda a interface do Streamlit
 st.markdown("""
     <style>
     .stApp {
         background-color: #0e1117;
         color: #fafafa;
     }
+    header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -138,15 +139,20 @@ with tab1:
         fig.add_annotation(x=price, y=11.5, text=f"<b>agora {price:,.0f}</b>", showarrow=False, font=dict(color="white", size=11), row=1, col=1)
         
         fig.update_layout(
-            title=dict(text=f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}"),
-            barmode='stack', template="plotly_dark", height=720, autosize=True,
+            title=dict(text=f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}", font=dict(color="white")),
+            barmode='stack', 
+            template="plotly_dark", 
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            height=720, 
+            autosize=True,
             showlegend=True,
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="white")),
             margin=dict(t=80, b=20, l=40, r=40)
         )
         
-        fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True)
-        fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True)
+        fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True, gridcolor="rgba(255,255,255,0.05)")
+        fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True, gridcolor="rgba(255,255,255,0.05)")
         fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
         fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
         
@@ -155,7 +161,7 @@ with tab1:
     render_stacks_chart(selected_symbol)
 
 # ==========================================
-# ABA 2: ORDENS LIMITE (Book Estilo Augusto Backs)
+# ABA 2: ORDENS LIMITE (Book com Fundo Escuro Absoluto e Leitura Perfeita)
 # ==========================================
 with tab2:
     @st.fragment(run_every=3)
@@ -171,20 +177,7 @@ with tab2:
         price_levels.sort()
         
         volumes = []
-        annotations_list = []
-        
-        # Anotação principal para o preço atual
-        annotations_list.append(dict(
-            x=1.0, y=price,
-            xref='paper', yref='y',
-            text=f"<b>agora</b><br>US$ {price:,.2f}",
-            showarrow=True,
-            arrowhead=2,
-            arrowcolor="white",
-            ax=60, ay=0,
-            align="left",
-            font=dict(color="#00FF66", size=11, family="monospace")
-        ))
+        labels_text = []
         
         for p in price_levels:
             dist = abs(p - price)
@@ -193,57 +186,55 @@ with tab2:
             
             p_min = p - (step_size / 2)
             p_max = p + (step_size / 2)
-            
-            if abs(p - price) > price * 0.015:
-                annotations_list.append(dict(
-                    x=1.0, y=p,
-                    xref='paper', yref='y',
-                    text=f"{p_min:,.0f}–{p_max:,.0f}<br><b>US$ {vol:,.1f} mi</b>",
-                    showarrow=True,
-                    arrowhead=0,
-                    arrowcolor="rgba(255,255,255,0.2)",
-                    ax=60, ay=0,
-                    align="left",
-                    font=dict(color="rgba(255,255,255,0.8)", size=9, family="monospace")
-                ))
+            labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.0f}–{p_max:,.0f})")
 
-        df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes})
+        df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
         colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
         
         fig_lim = go.Figure()
         
+        # Exibe os valores e faixas perfeitamente legíveis na ponta externa de cada barra
         fig_lim.add_trace(go.Bar(
             y=df_limits["Preco"],
             x=df_limits["Volume"],
             orientation='h',
             marker_color=colors,
+            text=df_limits["Label"],
+            textposition='outside',
+            textfont=dict(color="#ffffff", size=11),
             hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
         ))
         
         fig_lim.add_hline(
             y=price, 
             line_dash="dash", 
-            line_color="white"
+            line_color="white",
+            annotation_text=f"<b>agora: US$ {price:,.2f}</b>",
+            annotation_position="bottom right",
+            annotation_font=dict(color="#00FF66", size=12)
         )
         
         fig_lim.update_layout(
-            title=dict(text=f"Muralhas de Ordens Limite (Book de Ofertas) | Ativo: {symbol} (Preço: US$ {price:,.2f})"),
+            title=dict(text=f"Muralhas de Ordens Limite (Book de Ofertas) | Ativo: {symbol}", font=dict(color="white")),
             template="plotly_dark",
+            paper_bgcolor="#0e1117",  # Fundo escuro absoluto fora do gráfico
+            plot_bgcolor="#0e1117",   # Fundo escuro absoluto dentro da área do gráfico
             height=850,
             xaxis=dict(
                 title="Volume Acumulado (US$ Milhões)", 
                 showgrid=True, 
-                gridcolor="rgba(255,255,255,0.05)"
+                gridcolor="rgba(255,255,255,0.05)",
+                range=[0, 190]  # Garante espaço ideal para ler os textos nas pontas
             ),
             yaxis=dict(
                 title="", 
                 autorange="reversed",
                 tickformat=",f",
                 showgrid=True,
-                gridcolor="rgba(255,255,255,0.03)"
+                gridcolor="rgba(255,255,255,0.03)",
+                tickfont=dict(color="white")
             ),
-            margin=dict(t=80, b=40, l=40, r=200),
-            annotations=annotations_list,
+            margin=dict(t=80, b=40, l=40, r=60),
             showlegend=False
         )
         
