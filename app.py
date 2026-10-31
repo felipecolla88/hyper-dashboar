@@ -297,7 +297,7 @@ if pagina == "📈 Stacks, Liquidações & Books":
         render_limit_orders_chart(selected_symbol)
 
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
-    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras[cite: 1]")
+    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
     st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money[cite: 1].")
 
     st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
@@ -339,3 +339,4 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
         {"Grupo": "Peixe (Fish)", "Saldo": "$250 a $10K", "Carteiras": "44,702", "Em Posição": "30,238 (67.65%)", "Long": "$289.07 M", "Short": "$96.46 M", "Total": "$385.54 M", "Lucro": "11,336", "Prejuizo": "12,079", "Bias": "Muito Otimista"},
         {"Grupo": "Golfinho (Dolphin)", "Saldo": "$10K a $50K", "Carteiras": "7,450", "Em Posição": "5,726 (76.86%)", "Long": "$447.65 M", "Short": "$195.79 M", "Total": "$643.44 M", "Lucro": "2,279", "Prejuizo": "2,755", "Bias": "Muito Otimista"},
         {"Grupo": "Predador Alfa (Apex Predator)", "Saldo": "$50K a $100K", "Carteiras": "1,607", "Em Posição": "1,241 (77.23%)", "Long": "$287.73 M", "Short": "$162.18 M", "Total": "$449.91 M", "Lucro": "521", "Prejuizo": "590", "Bias": "Otimista"},
+        {"Grupo": "Pequena Baleia (Small Whale)", "Saldo": "$100K a $500K", "Carteiras": "1,818", "Em Posição": "1,4
