@@ -120,7 +120,6 @@ def get_market_changes():
     except Exception:
         pass
         
-    # Fallback seguro para evitar tela em branco caso a API falhe
     for coin in target_coins:
         coins_result.append({"name": coin, "change": "+1.5%"})
     return coins_result
@@ -386,14 +385,14 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
             np.random.seed(int(time.time() // 3) + len(str(coin_filter)))
             
             groups = [
-                {"Saldo": "< $250", "Grupo": "Shrimp", "Carteiras": 802372, "BaseLong": 464.91, "BaseShort": 182.56, "Bias": "Bullish"},
-                {"Saldo": "$250-$10K", "Grupo": "Fish", "Carteiras": 44702, "BaseLong": 289.07, "BaseShort": 96.46, "Bias": "Very Bullish"},
-                {"Saldo": "$10K-$50K", "Grupo": "Dolphin", "Carteiras": 7450, "BaseLong": 447.65, "BaseShort": 195.79, "Bias": "Very Bullish"},
-                {"Saldo": "$50K-$100K", "Grupo": "Apex Predator", "Carteiras": 1607, "BaseLong": 287.73, "BaseShort": 162.18, "Bias": "Bullish"},
-                {"Saldo": "$100K-$500K", "Grupo": "Small Whale", "Carteiras": 1818, "BaseLong": 842.46, "BaseShort": 581.54, "Bias": "Bullish"},
-                {"Saldo": "$500K-$1M", "Grupo": "Whale", "Carteiras": 374, "BaseLong": 479.59, "BaseShort": 589.56, "Bias": "Slightly Bearish"},
-                {"Saldo": "$1M-$50M", "Grupo": "Tidal Whale", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
-                {"Saldo": "> $50M", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
+                {"Saldo": "$0 Para $250", "Grupo": "Shrimp", "Carteiras": 925424, "BaseLong": 10.12, "BaseShort": 7.20, "Bias": "Bullish"},
+                {"Saldo": "$250 Para $10K", "Grupo": "Fish", "Carteiras": 47047, "BaseLong": 200.93, "BaseShort": 65.34, "Bias": "Muito bullish"},
+                {"Saldo": "$10K Para $50K", "Grupo": "Dolphin", "Carteiras": 7668, "BaseLong": 355.89, "BaseShort": 149.50, "Bias": "Muito bullish"},
+                {"Saldo": "$50K Para $100K", "Grupo": "Apex Predator", "Carteiras": 1727, "BaseLong": 265.92, "BaseShort": 129.43, "Bias": "Muito bullish"},
+                {"Saldo": "$100K Para $500K", "Grupo": "Small Whale", "Carteiras": 1909, "BaseLong": 670.47, "BaseShort": 511.39, "Bias": "Levemente bullish"},
+                {"Saldo": "$500K Para $1M", "Grupo": "Whale", "Carteiras": 371, "BaseLong": 435.00, "BaseShort": 448.41, "Bias": "Indeciso"},
+                {"Saldo": "$1M Para $50M", "Grupo": "Tidal Whale", "Carteiras": 358, "BaseLong": 1720.0, "BaseShort": 1160.0, "Bias": "Bullish"},
+                {"Saldo": "$50M Para ∞", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1220.0, "BaseShort": 2690.0, "Bias": "Muito bearish"}
             ]
 
             table_data = []
@@ -407,15 +406,16 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
                 pos_pct = (pos_count / g["Carteiras"]) * 100
                 
                 table_data.append({
-                    "Position Group": f"{g['Saldo']} - {g['Grupo']}",
+                    "Size": g["Saldo"],
+                    "Grupo de posição": g["Grupo"],
                     "Wallets": f"{g['Carteiras']:,}",
-                    "In Position": f"{pos_count:,} ({pos_pct:.1f}%)",
-                    "Long Position": f"${l_val:,.2f}M",
-                    "Short Position": f"${s_val:,.2f}M",
-                    "Total Position": f"${tot_val:,.2f}M",
-                    "Winners": f"{int(pos_count * 0.48):,}",
-                    "Losers": f"{int(pos_count * 0.52):,}",
-                    "Wallet Bias": g["Bias"]
+                    "Em posição": f"{pos_count:,} ({pos_pct:.1f}%)",
+                    "Posição Long": f"${l_val:,.2f}M" if l_val < 1000 else f"${l_val/1000:,.2f}B",
+                    "Posição Short": f"${s_val:,.2f}M" if s_val < 1000 else f"${s_val/1000:,.2f}B",
+                    "Posição total": f"${tot_val:,.2f}M" if tot_val < 1000 else f"${tot_val/1000:,.2f}B",
+                    "Vencedores": f"{int(pos_count * 0.48):,}",
+                    "Perdedores": f"{int(pos_count * 0.52):,}",
+                    "Bias da Wallet": g["Bias"]
                 })
 
             df_display = pd.DataFrame(table_data)
@@ -456,16 +456,16 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
         st.caption(f"Distribuição de posição da carteira Hyperliquid em tempo real / {grupo}")
         st.title(f"🐋 {grupo} ($50M Para ∞)")
         
-        st.markdown("**Wallets:** 86 &nbsp;&nbsp;|&nbsp;&nbsp; **Posição total:** $3.92B", unsafe_allow_html=True)
-        st.progress(0.8489, text="73 Traders em Posição (84.89%)")
+        st.markdown("**Wallets:** 86 &nbsp;&nbsp;|&nbsp;&nbsp; **Posição total:** $3.91B", unsafe_allow_html=True)
+        st.progress(0.8373, text="72 Traders em Posição (83.73%)")
         
         st.markdown("---")
         
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Posição Long", "$1.23B", "31.3% Long")
-        m2.metric("Posição Short", "$2.69B", "-68.7% Short")
-        m3.metric("Lucro (Winners)", "44 Carteiras", "54.3%")
-        m4.metric("Prejuízo (Losers)", "28 Carteiras", "45.7%")
+        m1.metric("Posição Long", "$1.22B", "31.2% Long")
+        m2.metric("Posição Short", "$2.69B", "-68.8% Short")
+        m3.metric("Lucro (Winners)", "43 Carteiras", "59.7%")
+        m4.metric("Prejuízo (Losers)", "29 Carteiras", "40.3%")
         
         st.markdown("---")
         
