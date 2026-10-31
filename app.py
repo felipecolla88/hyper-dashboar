@@ -14,14 +14,36 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS avançado para forçar o fundo escuro absoluto em toda a interface
+# Estilo CSS avançado para forçar fundo escuro absoluto e textos em branco puro (eliminando cinzas)
 st.markdown("""
     <style>
     .stApp {
         background-color: #0e1117;
-        color: #fafafa;
+        color: #ffffff;
     }
     header {visibility: hidden;}
+    
+    /* Forçar todos os textos gerais, títulos e rótulos para branco puro */
+    h1, h2, h3, h4, h5, h6, p, span, label, div {
+        color: #ffffff !important;
+    }
+    
+    /* Textos secundários e metadados mais claros para leitura perfeita */
+    .streamlit-expanderHeader, .stMarkdown, div[data-testid="stMetricValue"], div[data-testid="stMetricLabel"] {
+        color: #ffffff !important;
+    }
+    
+    /* Caixas de texto, selects e tabelas com alto contraste */
+    div[data-baseweb="select"] > div {
+        background-color: #161b22 !important;
+        color: #ffffff !important;
+        border-color: #30363d !important;
+    }
+    
+    /* Linhas e separadores visíveis */
+    hr {
+        border-color: #30363d !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -134,7 +156,7 @@ if pagina == "📈 Stacks, Liquidações & Books":
                 marker=dict(color="#00FF66", size=11, symbol="triangle-up", line=dict(color="white", width=1)),
                 text=[f"${s}M" for s in df_hist["size"]],
                 textposition="top center",
-                textfont=dict(color="#00FF66", size=10),
+                textfont=dict(color="#ffffff", size=10),
                 name="Liquidação de Grande Player",
                 hovertemplate="<b>Grande Player Liquidado</b><br>Preço: US$ %{x:,.2f}<br>Volume: $%{text}<extra></extra>"
             ), row=1, col=1)
@@ -161,13 +183,14 @@ if pagina == "📈 Stacks, Liquidações & Books":
                 autosize=True,
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="white")),
-                margin=dict(t=80, b=20, l=40, r=40)
+                margin=dict(t=80, b=20, l=40, r=40),
+                font=dict(color="white")
             )
              
-            fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True, gridcolor="rgba(255,255,255,0.05)")
-            fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True, gridcolor="rgba(255,255,255,0.05)")
-            fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
-            fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.05)")
+            fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True, gridcolor="rgba(255,255,255,0.1)", tickfont=dict(color="white"))
+            fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
              
             st.plotly_chart(fig, use_container_width=True)
 
@@ -239,20 +262,24 @@ if pagina == "📈 Stacks, Liquidações & Books":
                 xaxis=dict(
                     title="Volume Acumulado (US$ Milhões)", 
                     showgrid=True, 
-                    gridcolor="rgba(255,255,255,0.05)",
-                    range=[0, 210]
+                    gridcolor="rgba(255,255,255,0.1)",
+                    range=[0, 210],
+                    title_font=dict(color="white"),
+                    tickfont=dict(color="white")
                 ),
                 yaxis=dict(
                     title="Faixas de Preço (US$)", 
                     autorange="reversed",
                     tickformat=",f",
                     showgrid=True,
-                    gridcolor="rgba(255,255,255,0.03)",
+                    gridcolor="rgba(255,255,255,0.1)",
                     tickfont=dict(color="white"),
+                    title_font=dict(color="white"),
                     range=[max_price + (step_val * 0.5), min_price - (step_val * 0.5)]
                 ),
                 margin=dict(t=80, b=40, l=60, r=80),
-                showlegend=False
+                showlegend=False,
+                font=dict(color="white")
             )
              
             st.plotly_chart(fig_lim, use_container_width=True)
@@ -265,7 +292,7 @@ if pagina == "📈 Stacks, Liquidações & Books":
 # ==========================================
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
-    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money.")
+    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money[cite: 1].")
 
     # 1. Heatmap Interativo Superior de Moedas
     st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
@@ -349,7 +376,6 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     
     row_sel = df_pos[df_pos["Grupo"] == grupo_selecionado].iloc[0]
     
-    # CORRIGIDO: Variáveis corrigidas para col_inf1, col_inf2, col_inf3
     col_inf1, col_inf2, col_inf3 = st.columns(3)
     col_inf1.metric("Total de Carteiras no Grupo", row_sel["Carteiras"])
     col_inf2.metric("Volume Consolidado", row_sel["Total"])
