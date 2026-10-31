@@ -297,5 +297,20 @@ if pagina == "📈 Stacks, Liquidações & Books":
         render_limit_orders_chart(selected_symbol)
 
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
-    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
-    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money
+    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras[cite: 1]")
+    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money[cite: 1].")
+
+    st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
+    coins_data = [
+        {"name": "BTC", "change": "+2.4%"}, {"name": "XRP", "change": "+5.1%"},
+        {"name": "WLD", "change": "-1.8%"}, {"name": "ONDO", "change": "+3.7%"},
+        {"name": "GRAM", "change": "-0.5%"}, {"name": "CRV", "change": "+1.2%"},
+        {"name": "JUP", "change": "+4.8%"}, {"name": "FIL", "change": "-2.3%"},
+        {"name": "TIA", "change": "+6.0%"}, {"name": "DOT", "change": "-1.1%"},
+        {"name": "APT", "change": "+0.4%"}, {"name": "DASH", "change": "-3.2%"},
+        {"name": "ENA", "change": "+2.9%"}, {"name": "KAS", "change": "+7.5%"}
+    ]
+
+    cols_heat = st.columns(len(coins_data))
+    for idx, c in enumerate(coins_data):
+        with
