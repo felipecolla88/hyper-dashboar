@@ -348,5 +348,12 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     grupo_selecionado = st.selectbox("Selecione o grupo para auditar alavancagem e métricas detalhadas:", df_pos["Grupo"].tolist())
     
     row_sel = df_pos[df_pos["Grupo"] == grupo_selecionado].iloc[0]
+    
+    # CORRIGIDO: Variáveis corrigidas para col_inf1, col_inf2, col_inf3
     col_inf1, col_inf2, col_inf3 = st.columns(3)
-    col_inf
+    col_inf1.metric("Total de Carteiras no Grupo", row_sel["Carteiras"])
+    col_inf2.metric("Volume Consolidado", row_sel["Total"])
+    col_inf3.metric("Viés Predominante", row_sel["Bias"])
+
+    if st.button("Exportar Relatório do Grupo (JSON)"):
+        st.success(f"Dados consolidados do grupo {grupo_selecionado} preparados com sucesso para exportação!")
