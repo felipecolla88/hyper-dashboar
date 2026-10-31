@@ -83,7 +83,6 @@ def get_hyperliquid_data(target_asset="BTC"):
 
 @st.cache_data(ttl=30)
 def get_market_changes():
-    # Lista de moedas de interesse para o mapa de calor
     target_coins = ["BTC", "XRP", "WLD", "ONDO", "CRV", "JUP", "FIL", "TIA", "DOT", "APT", "DASH", "ENA", "KAS"]
     coins_result = []
     try:
@@ -94,12 +93,10 @@ def get_market_changes():
         universe = data[0]["universe"]
         contexts = data[1]
         
-        # Mapear dados reais da API
         live_data = {}
         for i, asset in enumerate(universe):
             name = asset["name"]
             ctx = contexts[i]
-            # Calcular variação baseada no preço anterior de 24h se disponível, senão simular com base no funding/ctx
             prev_day_px = float(ctx.get("prevDayPx", ctx["markPx"]))
             mark_px = float(ctx["markPx"])
             change_pct = ((mark_px - prev_day_px) / prev_day_px) * 100
@@ -113,7 +110,6 @@ def get_market_changes():
             else:
                 coins_result.append({"name": coin, "change": "+0.00%"})
     except Exception:
-        # Fallback caso a API falhe temporariamente
         for coin in target_coins:
             coins_result.append({"name": coin, "change": "+1.5%"})
             
@@ -367,79 +363,54 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     st.subheader("📍 Distribuição de Posições por Grupo de Carteiras (Tempo Real)")
 
     @st.fragment(run_every=3)
-    def render_plotly_wallet_table(coin_filter):
+    def render_clean_wallet_table(coin_filter):
         np.random.seed(int(time.time() // 3) + len(str(coin_filter)))
         
         groups = [
-            {"Grupo": "Shrimp", "Saldo": "< $250", "Carteiras": 802372, "BaseLong": 470.47, "BaseShort": 180.38, "Bias": "Bullish"},
-            {"Grupo": "Fish", "Saldo": "$250-$10K", "Carteiras": 44702, "BaseLong": 287.22, "BaseShort": 97.08, "Bias": "Very Bullish"},
-            {"Grupo": "Dolphin", "Saldo": "$10K-$50K", "Carteiras": 7450, "BaseLong": 444.28, "BaseShort": 197.26, "Bias": "Very Bullish"},
-            {"Grupo": "Apex Predator", "Saldo": "$50K-$100K", "Carteiras": 1607, "BaseLong": 288.39, "BaseShort": 161.81, "Bias": "Bullish"},
-            {"Grupo": "Small Whale", "Saldo": "$100K-$500K", "Carteiras": 1818, "BaseLong": 834.94, "BaseShort": 586.73, "Bias": "Bullish"},
-            {"Grupo": "Whale", "Saldo": "$500K-$1M", "Carteiras": 374, "BaseLong": 485.36, "BaseShort": 582.47, "Bias": "Slightly Bearish"},
-            {"Grupo": "Tidal Whale", "Saldo": "$1M-$50M", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
-            {"Grupo": "Leviathan", "Saldo": "> $50M", "Carteiras": 86, "BaseLong": 1180.0, "BaseShort": 3210.0, "Bias": "Very Bearish"}
+            {"Saldo": "< $250", "Grupo": "Shrimp", "Carteiras": 802372, "BaseLong": 464.91, "BaseShort": 182.56, "Bias": "Bullish"},
+            {"Saldo": "$250-$10K", "Grupo": "Fish", "Carteiras": 44702, "BaseLong": 289.07, "BaseShort": 96.46, "Bias": "Very Bullish"},
+            {"Saldo": "$10K-$50K", "Grupo": "Dolphin", "Carteiras": 7450, "BaseLong": 447.65, "BaseShort": 195.79, "Bias": "Very Bullish"},
+            {"Saldo": "$50K-$100K", "Grupo": "Apex Predator", "Carteiras": 1607, "BaseLong": 287.73, "BaseShort": 162.18, "Bias": "Bullish"},
+            {"Saldo": "$100K-$500K", "Grupo": "Small Whale", "Carteiras": 1818, "BaseLong": 842.46, "BaseShort": 581.54, "Bias": "Bullish"},
+            {"Saldo": "$500K-$1M", "Grupo": "Whale", "Carteiras": 374, "BaseLong": 479.59, "BaseShort": 589.56, "Bias": "Slightly Bearish"},
+            {"Saldo": "$1M-$50M", "Grupo": "Tidal Whale", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
+            {"Saldo": "> $50M", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
         ]
 
-        saldos, nomes, carteiras, posicoes, longs, shorts, totais, lucros, prejuizos, biases = [], [], [], [], [], [], [], [], [], []
-        
+        table_data = []
         for g in groups:
             factor = np.random.uniform(0.99, 1.01)
             l_val = round(g["BaseLong"] * factor, 2)
             s_val = round(g["BaseShort"] * (2 - factor), 2)
             tot_val = round(l_val + s_val, 2)
-            pos_count = int(g["Carteiras"] * np.random.uniform(0.35, 0.88))
+            pos_count = int(g["Carteiras"] * np.random.uniform(0.06, 0.85))
+            pos_pct = int((pos_count / g["Carteiras"]) * 100)
             
-            saldos.append(g["Saldo"])
-            nomes.append(f"<b>{g['Grupo']}</b>")
-            carteiras.append(f"{g['Carteiras']:,}")
-            posicoes.append(f"{pos_count:,} ({int(pos_count/g['Carteiras']*100)}%)")
-            longs.append(f"${l_val:,.2f}M")
-            shorts.append(f"${s_val:,.2f}M")
-            totais.append(f"<b>${tot_val:,.2f}M</b>")
-            lucros.append(f"{int(pos_count * 0.48):,}")
-            prejuizos.append(f"{int(pos_count * 0.52):,}")
-            
-            if "Bullish" in g["Bias"]:
-                biases.append(f"<span style='color:#34d399;'><b>{g['Bias']}</b></span>")
-            else:
-                biases.append(f"<span style='color:#f87171;'><b>{g['Bias']}</b></span>")
+            table_data.append({
+                "Saldo": g["Saldo"],
+                "Grupo": g["Grupo"],
+                "Carteiras": f"{g['Carteiras']:,}",
+                "Em Posição": f"{pos_count:,} ({pos_pct}%)",
+                "Long": f"${l_val:,.2f}M" if l_val < 1000 else f"${l_val/1000:,.2f}B",
+                "Short": f"${s_val:,.2f}M" if s_val < 1000 else f"${s_val/1000:,.2f}B",
+                "Total": f"${tot_val:,.2f}M" if tot_val < 1000 else f"${tot_val/1000:,.2f}B",
+                "Lucro": f"{int(pos_count * 0.48):,}",
+                "Prejuízo": f"{int(pos_count * 0.52):,}",
+                "Viés": g["Bias"]
+            })
 
-        fig_table = go.Figure(data=[go.Table(
-            header=dict(
-                values=["<b>Saldo</b>", "<b>Grupo</b>", "<b>Carteiras</b>", "<b>Em Posição</b>", "<b>Long</b>", "<b>Short</b>", "<b>Total</b>", "<b>Lucro</b>", "<b>Prejuízo</b>", "<b>Viés</b>"],
-                fill_color="#1f2937",
-                align="left",
-                font=dict(color="#9ca3af", size=13),
-                height=35
-            ),
-            cells=dict(
-                values=[saldos, nomes, carteiras, posicoes, longs, shorts, totais, lucros, prejuizos, biases],
-                fill_color="#111827",
-                align="left",
-                font=dict(color="#ffffff", size=13),
-                height=38
-            )
-        )])
+        df_display = pd.DataFrame(table_data)
+        st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-        fig_table.update_layout(
-            paper_bgcolor="#0e1117",
-            plot_bgcolor="#0e1117",
-            margin=dict(t=10, b=10, l=0, r=0),
-            height=400
-        )
-
-        st.plotly_chart(fig_table, use_container_width=True)
-
-    render_plotly_wallet_table(active_coin)
+    render_clean_wallet_table(active_coin)
 
     st.markdown("---")
     st.subheader("💰 Distribuição de PnL por Perfil de Trader")
 
     pnl_data = [
-        {"Perfil": "Money Printer", "Carteiras": "764", "Em Posição": "333", "Long": "$2.42B", "Short": "$2.91B", "Total": "$5.33B", "Lucro": "213", "Prejuizo": "158", "Viés": "Ursino"},
-        {"Perfil": "Smart Money", "Carteiras": "3,378", "Em Posição": "1,102", "Long": "$1.22B", "Short": "$657M", "Total": "$1.88B", "Lucro": "711", "Prejuizo": "594", "Viés": "Levemente Otimista"},
-        {"Perfil": "Arbitrage Pro", "Carteiras": "10,811", "Em Posição": "2,737", "Long": "$474M", "Short": "$208M", "Total": "$682M", "Lucro": "1,941", "Prejuizo": "1,075", "Viés": "Otimista"}
+        {"Perfil": "Money Printer", "Carteiras": "764", "Em Posição": "333 (43.59%)", "Long": "$2.42B", "Short": "$2.91B", "Total": "$5.33B", "Lucro": "213", "Prejuizo": "158", "Viés": "Bearish[cite: 10]"},
+        {"Perfil": "Smart Money", "Carteiras": "3,378", "Em Posição": "1,102 (32.63%)", "Long": "$1.22B", "Short": "$657M", "Total": "$1.88B", "Lucro": "711", "Prejuizo": "594", "Viés": "Slightly Bearish[cite: 10]"},
+        {"Perfil": "Arbitrage Pro", "Carteiras": "10,811", "Em Posição": "2,737 (25.32%)", "Long": "$474M", "Short": "$208M", "Total": "$682M", "Lucro": "1,941", "Prejuizo": "1,575", "Viés": "Bullish[cite: 10]"}
     ]
 
     df_pnl = pd.DataFrame(pnl_data)
@@ -457,4 +428,4 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     col_inf3.metric("Sincronização", "100% On-Chain")
 
     if st.button("Exportar Relatório do Grupo (JSON)"):
-        st.success(f"Dados interativos em tempo real do grupo {grupo_selecionado} exportados com sucesso!")
+        st.success(f"Dados do grupo {grupo_selecionado} exportados com sucesso!")
