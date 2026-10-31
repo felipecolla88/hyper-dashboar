@@ -175,7 +175,36 @@ if pagina == "📈 Stacks, Liquidações & Books":
             fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
             fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
              
+            marker_config = dict(
+                color="#00FF66",
+                size=11,
+                symbol="triangle-up",
+                line=dict(color="white", width=1)
+            )
+            
             fig.add_trace(go.Scatter(
-                x=df_hist["price"], y=(df_hist["size"] * 0.3) + 3.0,
+                x=df_hist["price"], 
+                y=(df_hist["size"] * 0.3) + 3.0,
                 mode="markers+text",
-                marker=dict(color="#00FF66", size=11, symbol="triangle-up", line=dict(
+                marker=marker_config,
+                text=[f"${s}M" for s in df_hist["size"]],
+                textposition="top center",
+                textfont=dict(color="#ffffff", size=10),
+                name="Liquidação de Grande Player",
+                hovertemplate="<b>Grande Player Liquidado</b><br>Preço: US$ %{x:,.2f}<br>Volume: $%{text}<extra></extra>"
+            ), row=1, col=1)
+             
+            cum_long_y = np.cumsum(df_longs["Vol_Base"] + df_longs["Vol_Extrema"])[::-1]
+            cum_short_y = np.cumsum(df_shorts["Vol_Base"] + df_shorts["Vol_Extrema"])
+             
+            fig.add_trace(go.Scatter(x=df_longs["Preco"], y=cum_long_y, fill='tozeroy', mode='lines', line=dict(color='rgba(255, 112, 67, 0.9)', width=2, shape='spline'), fillcolor='rgba(255, 112, 67, 0.22)', name="Acumulado Longs"), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_shorts["Preco"], y=cum_short_y, fill='tozeroy', mode='lines', line=dict(color='rgba(46, 204, 113, 0.9)', width=2, shape='spline'), fillcolor='rgba(46, 204, 113, 0.22)', name="Acumulado Shorts"), row=2, col=1)
+             
+            fig.add_vline(x=price, line_dash="dash", line_color="white", row=1, col=1)
+            fig.add_vline(x=price, line_dash="dash", line_color="white", row=2, col=1)
+             
+            fig.add_annotation(x=price, y=-0.5, text="▲", showarrow=False, font=dict(color="#00FF66", size=16), row=1, col=1)
+            fig.add_annotation(x=price, y=11.5, text=f"<b>agora {price:,.0f}</b>", showarrow=False, font=dict(color="white", size=11), row=1, col=1)
+             
+            fig.update_layout(
+                title=dict(text=f"Ativo: {symbol}
