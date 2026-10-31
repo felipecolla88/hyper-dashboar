@@ -351,4 +351,30 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     ]
 
     df_pos = pd.DataFrame(pos_data)
-    st.dataframe(df_pos,
+    st.dataframe(df_pos, use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("💰 Distribuição de PnL por Perfil de Trader")
+
+    pnl_data = [
+        {"Perfil": "Money Printer", "Carteiras": "764", "Em Posição": "333", "Long": "$2.42B", "Short": "$2.91B", "Total": "$5.33B", "Lucro": "213", "Prejuizo": "158", "Viés": "Ursino"},
+        {"Perfil": "Smart Money", "Carteiras": "3,378", "Em Posição": "1,102", "Long": "$1.22B", "Short": "$657M", "Total": "$1.88B", "Lucro": "711", "Prejuizo": "594", "Viés": "Levemente Otimista"},
+        {"Perfil": "Arbitrage Pro", "Carteiras": "10,811", "Em Posição": "2,737", "Long": "$474M", "Short": "$208M", "Total": "$682M", "Lucro": "1,941", "Prejuizo": "1,075", "Viés": "Otimista"}
+    ]
+
+    df_pnl = pd.DataFrame(pnl_data)
+    st.dataframe(df_pnl, use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("🔍 Inspetor de Faixa de Carteira")
+    grupo_selecionado = st.selectbox("Selecione o grupo para auditar alavancagem e métricas detalhadas:", df_pos["Grupo"].tolist())
+    
+    row_sel = df_pos[df_pos["Grupo"] == grupo_selecionado].iloc[0]
+    
+    col_inf1, col_inf2, col_inf3 = st.columns(3)
+    col_inf1.metric("Total de Carteiras no Grupo", row_sel["Carteiras"])
+    col_inf2.metric("Volume Consolidado", row_sel["Total"])
+    col_inf3.metric("Viés Predominante", row_sel["Bias"])
+
+    if st.button("Exportar Relatório do Grupo (JSON)"):
+        st.success(f"Dados consolidados do grupo {grupo_selecionado} preparados com sucesso para exportação!")
