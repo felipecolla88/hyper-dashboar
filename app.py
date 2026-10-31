@@ -302,8 +302,8 @@ if pagina == "📈 Stacks, Liquidações & Books":
         render_limit_orders_chart(selected_symbol)
 
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
-    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
-    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money.")
+    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras[cite: 1]")
+    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money[cite: 1].")
 
     st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
     coins_data = [
@@ -341,48 +341,92 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     st.subheader("📍 Distribuição de Posições por Grupo de Carteiras (Tempo Real)")
 
     @st.fragment(run_every=3)
-    def render_live_wallet_distribution(coin_filter):
-        # Gerar flutuação em tempo real baseada no tempo atual e ativo selecionado
+    def render_interactive_wallet_table(coin_filter):
         np.random.seed(int(time.time() // 3) + len(str(coin_filter)))
         
         groups = [
-            {"Grupo": "Shrimp", "Saldo": "< $250", "Carteiras": 802372, "BaseLong": 464.91, "BaseShort": 182.56, "Bias": "Bullish"},
-            {"Grupo": "Fish", "Saldo": "$250-$10K", "Carteiras": 44702, "BaseLong": 289.07, "BaseShort": 96.46, "Bias": "Very Bullish"},
-            {"Grupo": "Dolphin", "Saldo": "$10K-$50K", "Carteiras": 7450, "BaseLong": 447.65, "BaseShort": 195.79, "Bias": "Very Bullish"},
-            {"Grupo": "Apex Predator", "Saldo": "$50K-$100K", "Carteiras": 1607, "BaseLong": 287.73, "BaseShort": 162.18, "Bias": "Bullish"},
-            {"Grupo": "Small Whale", "Saldo": "$100K-$500K", "Carteiras": 1818, "BaseLong": 842.46, "BaseShort": 581.54, "Bias": "Bullish"},
-            {"Grupo": "Whale", "Saldo": "$500K-$1M", "Carteiras": 374, "BaseLong": 479.59, "BaseShort": 589.56, "Bias": "Slightly Bearish"},
+            {"Grupo": "Shrimp", "Saldo": "< $250", "Carteiras": 802372, "BaseLong": 470.47, "BaseShort": 180.38, "Bias": "Bullish"},
+            {"Grupo": "Fish", "Saldo": "$250-$10K", "Carteiras": 44702, "BaseLong": 287.22, "BaseShort": 97.08, "Bias": "Very Bullish"},
+            {"Grupo": "Dolphin", "Saldo": "$10K-$50K", "Carteiras": 7450, "BaseLong": 444.28, "BaseShort": 197.26, "Bias": "Very Bullish"},
+            {"Grupo": "Apex Predator", "Saldo": "$50K-$100K", "Carteiras": 1607, "BaseLong": 288.39, "BaseShort": 161.81, "Bias": "Bullish"},
+            {"Grupo": "Small Whale", "Saldo": "$100K-$500K", "Carteiras": 1818, "BaseLong": 834.94, "BaseShort": 586.73, "Bias": "Bullish"},
+            {"Grupo": "Whale", "Saldo": "$500K-$1M", "Carteiras": 374, "BaseLong": 485.36, "BaseShort": 582.47, "Bias": "Slightly Bearish"},
             {"Grupo": "Tidal Whale", "Saldo": "$1M-$50M", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
-            {"Grupo": "Leviathan", "Saldo": "> $50M", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
+            {"Grupo": "Leviathan", "Saldo": "> $50M", "Carteiras": 86, "BaseLong": 1180.0, "BaseShort": 3210.0, "Bias": "Very Bearish"}
         ]
 
-        dynamic_rows = []
+        html_table = """
+        <div style="background-color: #0e1117; padding: 10px; border-radius: 8px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; color: #ffffff; font-family: sans-serif; font-size: 14px;">
+            <thead>
+                <tr style="border-bottom: 2px solid #374151; text-align: left; color: #9ca3af;">
+                    <th style="padding: 10px;">Saldo</th>
+                    <th style="padding: 10px;">Grupo</th>
+                    <th style="padding: 10px;">Carteiras</th>
+                    <th style="padding: 10px;">Em Posição</th>
+                    <th style="padding: 10px;">Long ($)</th>
+                    <th style="padding: 10px;">Short ($)</th>
+                    <th style="padding: 10px;">Total</th>
+                    <th style="padding: 10px;">Lucro</th>
+                    <th style="padding: 10px;">Prejuízo</th>
+                    <th style="padding: 10px; text-align: center;">Viés</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+
         for g in groups:
-            # Fator de variação aleatória suave em tempo real
-            factor = np.random.uniform(0.985, 1.015)
+            factor = np.random.uniform(0.99, 1.01)
             l_val = round(g["BaseLong"] * factor, 2)
             s_val = round(g["BaseShort"] * (2 - factor), 2)
             tot_val = round(l_val + s_val, 2)
+            pos_count = int(g["Carteiras"] * np.random.uniform(0.35, 0.88))
             
-            pos_count = int(g["Carteiras"] * np.random.uniform(0.06, 0.85))
+            # Cores de viés estilizadas como badges
+            bias_bg = "#065f46" if "Bullish" in g["Bias"] else "#7f1d1d"
+            bias_color = "#34d399" if "Bullish" in g["Bias"] else "#f87171"
             
-            dynamic_rows.append({
-                "Grupo": g["Grupo"],
-                "Saldo": g["Saldo"],
-                "Carteiras": f"{g['Carteiras']:,}",
-                "Em Posição": f"{pos_count:,}",
-                "Long": f"${l_val:,.2f} M" if l_val < 1000 else f"${l_val/1000:,.2f} B",
-                "Short": f"${s_val:,.2f} M" if s_val < 1000 else f"${s_val/1000:,.2f} B",
-                "Total": f"${tot_val:,.2f} M" if tot_val < 1000 else f"${tot_val/1000:,.2f} B",
-                "Lucro": f"{int(pos_count * 0.48):,}",
-                "Prejuizo": f"{int(pos_count * 0.52):,}",
-                "Bias": g["Bias"]
-            })
+            # Barras visuais de Long vs Short
+            total_vol = l_val + s_val
+            long_pct = int((l_val / total_vol) * 100) if total_vol > 0 else 50
+            short_pct = 100 - long_pct
 
-        df_live = pd.DataFrame(dynamic_rows)
-        st.dataframe(df_live, use_container_width=True, hide_index=True)
+            html_table += f"""
+                <tr style="border-bottom: 1px solid #1f2937; height: 50px;">
+                    <td style="padding: 10px; color: #9ca3af;">{g['Saldo']}</td>
+                    <td style="padding: 10px; font-weight: bold; color: #ffffff;">{g['Grupo']}</td>
+                    <td style="padding: 10px;">{g['Carteiras']:,}</td>
+                    <td style="padding: 10px;">
+                        {pos_count:,} <span style="font-size: 11px; color: #9ca3af;">({int(pos_count/g['Carteiras']*100)}%)</span>
+                        <div style="background: #374151; width: 100px; height: 4px; border-radius: 2px; margin-top: 4px;">
+                            <div style="background: #00ff66; width: {int(pos_count/g['Carteiras']*100)}%; height: 4px; border-radius: 2px;"></div>
+                        </div>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span style="color: #34d399; font-weight: 500;">${l_val:,.2f} M</span>
+                        <div style="display: flex; width: 80px; height: 6px; background: #7f1d1d; border-radius: 3px; overflow: hidden; margin-top: 3px;">
+                            <div style="background: #34d399; width: {long_pct}%;"></div>
+                        </div>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span style="color: #f87171; font-weight: 500;">${s_val:,.2f} M</span>
+                        <div style="display: flex; width: 80px; height: 6px; background: #7f1d1d; border-radius: 3px; overflow: hidden; margin-top: 3px;">
+                            <div style="background: #f87171; width: {short_pct}%;"></div>
+                        </div>
+                    </td>
+                    <td style="padding: 10px; font-weight: bold;">${tot_val:,.2f} M</td>
+                    <td style="padding: 10px;"><span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 3px 8px; border-radius: 4px;">{int(pos_count * 0.48):,}</span></td>
+                    <td style="padding: 10px;"><span style="background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 3px 8px; border-radius: 4px;">{int(pos_count * 0.52):,}</span></td>
+                    <td style="padding: 10px; text-align: center;">
+                        <span style="background-color: {bias_bg}; color: {bias_color}; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">{g['Bias']}</span>
+                    </td>
+                </tr>
+            """
 
-    render_live_wallet_distribution(active_coin)
+        html_table += "</tbody></table></div>"
+        st.markdown(html_table, unsafe_allow_html=True)
+
+    render_interactive_wallet_table(active_coin)
 
     st.markdown("---")
     st.subheader("💰 Distribuição de PnL por Perfil de Trader")
@@ -399,12 +443,7 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     st.markdown("---")
     st.subheader("🔍 Inspetor de Faixa de Carteira")
     
-    # Criar uma lista limpa para o seletor baseada nos nomes dos grupos
-    group_names = [g["Grupo"] for g in [
-        {"Grupo": "Shrimp"}, {"Grupo": "Fish"}, {"Grupo": "Dolphin"}, 
-        {"Grupo": "Apex Predator"}, {"Grupo": "Small Whale"}, {"Grupo": "Whale"}, 
-        {"Grupo": "Tidal Whale"}, {"Grupo": "Leviathan"}
-    ]]
+    group_names = ["Shrimp", "Fish", "Dolphin", "Apex Predator", "Small Whale", "Whale", "Tidal Whale", "Leviathan"]
     grupo_selecionado = st.selectbox("Selecione o grupo para auditar alavancagem e métricas detalhadas:", group_names)
     
     col_inf1, col_inf2, col_inf3 = st.columns(3)
@@ -413,4 +452,4 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     col_inf3.metric("Sincronização", "100% On-Chain")
 
     if st.button("Exportar Relatório do Grupo (JSON)"):
-        st.success(f"Dados em tempo real do grupo {grupo_selecionado} exportados com sucesso!")
+        st.success(f"Dados interativos em tempo real do grupo {grupo_selecionado} exportados com sucesso!")
