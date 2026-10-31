@@ -363,5 +363,18 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     st.markdown(f"**Ativo em Foco:** `{st.session_state.get('selected_coin', 'TODOS')}`")
     st.markdown("---")
 
-    # 2. Métricas de Resumo Global
-    m1, m2, m3,
+    # 2. Métricas de Resumo Global (Corrigido para 4 colunas perfeitamente)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Volume Total em Posições", "$ 14.82 Bilhões", "+4.2%")
+    m2.metric("Proporção Global Long vs Short", "56.4% Long / 43.6% Short", "Bullish Bias")
+    m3.metric("Taxa Média de Lucratividade", "51.8%", "+2.1%")
+    m4.metric("Total de Carteiras Monitoradas", "824,410", "Ativas 24h")
+
+    st.markdown("---")
+
+    # 3. Tabela 1: Hyperliquid Wallet Position Distribution in Real-time
+    st.subheader("📍 Distribuição de Posições por Grupo de Carteiras")
+    
+    pos_data = [
+        {"Grupo": "Camarão (Shrimp)", "Saldo": "< $250", "Carteiras": "802,372", "Em Posição": "47,967 (5.98%)", "Long": "$464.91 M", "Short": "$182.56 M", "Total": "$647.47 M", "Lucro": "23,648", "Prejuizo": "26,775", "Bias": "Otimista"},
+        {"Grupo": "Peixe (Fish)", "Saldo": "$250 a $10K", "Carteiras": "44,702", "Em Posição": "30,238 (67.65%)", "Long": "$289.07 M", "Short": "$96.46 M", "Total": "$385.54 M", "Lucro": "11,336", "Prejuizo": "12,079", "Bias": "
