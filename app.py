@@ -153,5 +153,29 @@ if pagina == "📈 Stacks, Liquidações & Books":
                 shared_xaxes=True
             )
              
-            hover_longs = [f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" for p, v5, v1 in zip(df_longs["Preco"], df_longs["Vol_Base"], df_longs["Vol_Extrema"])]
-            hover_shorts = [f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" for p, v5, v1 in zip(df_shorts
+            hover_longs = [
+                f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>"
+                f"Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>"
+                f"Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" 
+                for p, v5, v1 in zip(df_longs["Preco"], df_longs["Vol_Base"], df_longs["Vol_Extrema"])
+            ]
+            
+            hover_shorts = [
+                f"<b>Faixa:</b> US$ {p-(step_size/2):,.2f} - US$ {p+(step_size/2):,.2f}<br>"
+                f"Base (Azul): US$ {v5} mi<br>Extrema: US$ {v1} mi<br>"
+                f"Total Nível: US$ {v5+v1:.1f} mi<extra></extra>" 
+                for p, v5, v1 in zip(df_shorts["Preco"], df_shorts["Vol_Base"], df_shorts["Vol_Extrema"])
+            ]
+             
+            COLOR_BASE_AZUL = "#1E88E5"
+            COLOR_EXTREMA = "#FF7043"
+             
+            fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Base"], marker_color=COLOR_BASE_AZUL, name="Alavancagem Normal/Média", hovertemplate=hover_longs), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Extrema"], marker_color=COLOR_EXTREMA, name="Alavancagem Extrema", hovertemplate=hover_longs), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
+             
+            fig.add_trace(go.Scatter(
+                x=df_hist["price"], y=(df_hist["size"] * 0.3) + 3.0,
+                mode="markers+text",
+                marker=dict(color="#00FF66", size=11, symbol="triangle-up", line=dict(
