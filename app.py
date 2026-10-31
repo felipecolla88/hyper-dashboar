@@ -352,16 +352,4 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
         {"Grupo": "Pequena Baleia (Small Whale)", "Saldo": "$100K a $500K", "Carteiras": "1,818", "Em Posição": "1,469 (80.81%)", "Long": "$842.46 M", "Short": "$581.54 M", "Total": "$1.42 B", "Lucro": "412", "Prejuizo": "725", "Bias": "Otimista"},
         {"Grupo": "Baleia (Whale)", "Saldo": "$500K a $1M", "Carteiras": "374", "Em Posição": "316 (84.5%)", "Long": "$479.59 M", "Short": "$589.56 M", "Total": "$1.07 B", "Lucro": "143", "Prejuizo": "163", "Bias": "Levemente Ursino"},
         {"Grupo": "Baleia Maré (Tidal Whale)", "Saldo": "$1M a $50M", "Carteiras": "343", "Em Posição": "288 (83.97%)", "Long": "$1.95 B", "Short": "$1.38 B", "Total": "$3.03 B", "Lucro": "126", "Prejuizo": "145", "Bias": "Muito Otimista"},
-        {"Grupo": "Leviatã (Leviathan)", "Saldo": "> $50M", "Carteiras": "86", "Em Posição": "75 (87.21%)", "Long": "$1.17 B", "Short": "$3.23 B", "Total": "$4.40 B", "Lucro": "38", "Prejuizo": "34", "Bias": "Muito Ursino"}
-    ]
-
-    df_pos = pd.DataFrame(pos_data)
-    st.dataframe(df_pos, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-
-    st.subheader("💰 Distribuição de PnL por Perfil de Trader")
-
-    pnl_data = [
-        {"Perfil": "Impressora de Dinheiro (Money Printer)", "Carteiras": "764", "Em Posição": "333 (43.59%)", "Long": "$2.42 B", "Short": "$2.91 B", "Total": "$5.33 B", "Lucro": "213", "Prejuizo": "158", "Viés": "Ursino"},
-        {"Perfil": "Dinheiro Inteligente (Smart Money)", "Carteiras": "3,378",
+        {"Grupo": "Leviatã (Leviathan)", "Saldo": "> $50M", "Carteiras": "86", "Em Posição": "75 (87.21%)
