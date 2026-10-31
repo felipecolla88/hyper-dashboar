@@ -14,35 +14,53 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo CSS avançado para forçar fundo escuro absoluto e textos em branco puro (eliminando cinzas)
+# Estilo CSS avançado para corrigir o contraste dos botões, menus e textos
 st.markdown("""
     <style>
+    /* Fundo geral escuro */
     .stApp {
         background-color: #0e1117;
         color: #ffffff;
     }
     header {visibility: hidden;}
     
-    /* Forçar todos os textos gerais, títulos e rótulos para branco puro */
+    /* Forçar todos os textos gerais para branco puro */
     h1, h2, h3, h4, h5, h6, p, span, label, div {
         color: #ffffff !important;
     }
     
-    /* Textos secundários e metadados mais claros para leitura perfeita */
-    .streamlit-expanderHeader, .stMarkdown, div[data-testid="stMetricValue"], div[data-testid="stMetricLabel"] {
+    /* Correção crucial para os botões (Mapa de Calor) não ficarem brancos invisíveis */
+    div.stButton > button {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+        border: 1px solid #374151 !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+    }
+    div.stButton > button:hover {
+        background-color: #374151 !important;
+        border-color: #4b5563 !important;
+        color: #00ff66 !important;
+    }
+
+    /* Barra lateral com fundo e textos legíveis */
+    section[data-testid="stSidebar"] {
+        background-color: #111827 !important;
+    }
+    section[data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
-    
-    /* Caixas de texto, selects e tabelas com alto contraste */
+
+    /* Caixas de seleção e inputs */
     div[data-baseweb="select"] > div {
-        background-color: #161b22 !important;
+        background-color: #1f2937 !important;
         color: #ffffff !important;
-        border-color: #30363d !important;
+        border-color: #374151 !important;
     }
     
-    /* Linhas e separadores visíveis */
+    /* Linhas divisórias */
     hr {
-        border-color: #30363d !important;
+        border-color: #374151 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -92,10 +110,8 @@ if pagina == "📈 Stacks, Liquidações & Books":
             index=0
         )
 
-    # Criação das Abas para separar as ferramentas originais
     tab1, tab2 = st.tabs(["📊 Stacks & Liquidações", "🧱 Ordens Limite (Book)"])
 
-    # ABA 1: STACKS & LIQUIDAÇÕES
     with tab1:
         @st.fragment(run_every=3)
         def render_stacks_chart(symbol):
@@ -196,7 +212,6 @@ if pagina == "📈 Stacks, Liquidações & Books":
 
         render_stacks_chart(selected_symbol)
 
-    # ABA 2: ORDENS LIMITE
     with tab2:
         @st.fragment(run_every=3)
         def render_limit_orders_chart(symbol):
@@ -297,20 +312,20 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     # 1. Heatmap Interativo Superior de Moedas
     st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
     coins_data = [
-        {"name": "BTC", "change": "+2.4%", "color": "#00C853"},
-        {"name": "XRP", "change": "+5.1%", "color": "#00C853"},
-        {"name": "WLD", "change": "-1.8%", "color": "#FF5252"},
-        {"name": "ONDO", "change": "+3.7%", "color": "#00C853"},
-        {"name": "GRAM", "change": "-0.5%", "color": "#FF5252"},
-        {"name": "CRV", "change": "+1.2%", "color": "#00C853"},
-        {"name": "JUP", "change": "+4.8%", "color": "#00C853"},
-        {"name": "FIL", "change": "-2.3%", "color": "#FF5252"},
-        {"name": "TIA", "change": "+6.0%", "color": "#00C853"},
-        {"name": "DOT", "change": "-1.1%", "color": "#FF5252"},
-        {"name": "APT", "change": "+0.4%", "color": "#00C853"},
-        {"name": "DASH", "change": "-3.2%", "color": "#FF5252"},
-        {"name": "ENA", "change": "+2.9%", "color": "#00C853"},
-        {"name": "KAS", "change": "+7.5%", "color": "#00C853"}
+        {"name": "BTC", "change": "+2.4%"},
+        {"name": "XRP", "change": "+5.1%"},
+        {"name": "WLD", "change": "-1.8%"},
+        {"name": "ONDO", "change": "+3.7%"},
+        {"name": "GRAM", "change": "-0.5%"},
+        {"name": "CRV", "change": "+1.2%"},
+        {"name": "JUP", "change": "+4.8%"},
+        {"name": "FIL", "change": "-2.3%"},
+        {"name": "TIA", "change": "+6.0%"},
+        {"name": "DOT", "change": "-1.1%"},
+        {"name": "APT", "change": "+0.4%"},
+        {"name": "DASH", "change": "-3.2%"},
+        {"name": "ENA", "change": "+2.9%"},
+        {"name": "KAS", "change": "+7.5%"}
     ]
 
     cols_heat = st.columns(len(coins_data))
@@ -344,42 +359,4 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     pos_data = [
         {"Grupo": "Camarão (Shrimp)", "Saldo": "< $250", "Carteiras": "802,372", "Em Posição": "47,967 (5.98%)", "Long": "$464.91 M", "Short": "$182.56 M", "Total": "$647.47 M", "Lucro": "23,648", "Prejuizo": "26,775", "Bias": "Otimista"},
         {"Grupo": "Peixe (Fish)", "Saldo": "$250 a $10K", "Carteiras": "44,702", "Em Posição": "30,238 (67.65%)", "Long": "$289.07 M", "Short": "$96.46 M", "Total": "$385.54 M", "Lucro": "11,336", "Prejuizo": "12,079", "Bias": "Muito Otimista"},
-        {"Grupo": "Golfinho (Dolphin)", "Saldo": "$10K a $50K", "Carteiras": "7,450", "Em Posição": "5,726 (76.86%)", "Long": "$447.65 M", "Short": "$195.79 M", "Total": "$643.44 M", "Lucro": "2,279", "Prejuizo": "2,755", "Bias": "Muito Otimista"},
-        {"Grupo": "Predador Alfa (Apex Predator)", "Saldo": "$50K a $100K", "Carteiras": "1,607", "Em Posição": "1,241 (77.23%)", "Long": "$287.73 M", "Short": "$162.18 M", "Total": "$449.91 M", "Lucro": "521", "Prejuizo": "590", "Bias": "Otimista"},
-        {"Grupo": "Pequena Baleia (Small Whale)", "Saldo": "$100K a $500K", "Carteiras": "1,818", "Em Posição": "1,469 (80.81%)", "Long": "$842.46 M", "Short": "$581.54 M", "Total": "$1.42 B", "Lucro": "412", "Prejuizo": "725", "Bias": "Otimista"},
-        {"Grupo": "Baleia (Whale)", "Saldo": "$500K a $1M", "Carteiras": "374", "Em Posição": "316 (84.5%)", "Long": "$479.59 M", "Short": "$589.56 M", "Total": "$1.07 B", "Lucro": "143", "Prejuizo": "163", "Bias": "Levemente Ursino"},
-        {"Grupo": "Baleia Maré (Tidal Whale)", "Saldo": "$1M a $50M", "Carteiras": "343", "Em Posição": "288 (83.97%)", "Long": "$1.95 B", "Short": "$1.38 B", "Total": "$3.03 B", "Lucro": "126", "Prejuizo": "145", "Bias": "Muito Otimista"},
-        {"Grupo": "Leviatã (Leviathan)", "Saldo": "> $50M", "Carteiras": "86", "Em Posição": "75 (87.21%)", "Long": "$1.17 B", "Short": "$3.23 B", "Total": "$4.40 B", "Lucro": "38", "Prejuizo": "34", "Bias": "Muito Ursino"}
-    ]
-
-    df_pos = pd.DataFrame(pos_data)
-    st.dataframe(df_pos, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-
-    # 4. Tabela 2: Hyperliquid Wallet PNL Distribution in Real time
-    st.subheader("💰 Distribuição de PnL por Perfil de Trader")
-
-    pnl_data = [
-        {"Perfil": "Impressora de Dinheiro (Money Printer)", "Carteiras": "764", "Em Posição": "333 (43.59%)", "Long": "$2.42 B", "Short": "$2.91 B", "Total": "$5.33 B", "Lucro": "213", "Prejuizo": "158", "Viés": "Ursino"},
-        {"Perfil": "Dinheiro Inteligente (Smart Money)", "Carteiras": "3,378", "Em Posição": "1,102 (32.63%)", "Long": "$1.22 B", "Short": "$657.21 M", "Total": "$1.88 B", "Lucro": "711", "Prejuizo": "594", "Viés": "Levemente Otimista"},
-        {"Perfil": "Especialista em Arbitragem (Arbitrage Pro)", "Carteiras": "10,811", "Em Posição": "2,737 (25.32%)", "Long": "$474.58 M", "Short": "$208.27 M", "Total": "$682.85 M", "Lucro": "1,941", "Prejuizo": "1,075", "Viés": "Otimista"}
-    ]
-
-    df_pnl = pd.DataFrame(pnl_data)
-    st.dataframe(df_pnl, use_container_width=True, hide_index=True)
-
-    # 5. Seção de Inspeção / Modal Interativo
-    st.markdown("---")
-    st.subheader("🔍 Inspetor de Faixa de Carteira")
-    grupo_selecionado = st.selectbox("Selecione o grupo para auditar alavancagem e métricas detalhadas:", df_pos["Grupo"].tolist())
-    
-    row_sel = df_pos[df_pos["Grupo"] == grupo_selecionado].iloc[0]
-    
-    col_inf1, col_inf2, col_inf3 = st.columns(3)
-    col_inf1.metric("Total de Carteiras no Grupo", row_sel["Carteiras"])
-    col_inf2.metric("Volume Consolidado", row_sel["Total"])
-    col_inf3.metric("Viés Predominante", row_sel["Bias"])
-
-    if st.button("Exportar Relatório do Grupo (JSON)"):
-        st.success(f"Dados consolidados do grupo {grupo_selecionado} preparados com sucesso para exportação!")
+        {"Grupo": "Golfinho (Dolphin)", "Saldo": "$10K a $50K", "Carteiras": "7,4
