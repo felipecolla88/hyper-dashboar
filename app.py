@@ -108,7 +108,7 @@ def get_market_changes():
                 sign = "+" if val >= 0 else ""
                 coins_result.append({"name": coin, "change": f"{sign}{val:.2f}%"})
             else:
-                coins_result.append({"name": coin, "change": "+0.00%</em>"})
+                coins_result.append({"name": coin, "change": "+0.00%"})
     except Exception:
         for coin in target_coins:
             coins_result.append({"name": coin, "change": "+1.5%"})
@@ -377,7 +377,6 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
             {"Saldo": "> $50M", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
         ]
 
-        # Montar tabela HTML estilizada idêntica à referência oficial
         html_content = """
         <div style="background-color: #0e1117; border-radius: 8px; overflow-x: auto; padding: 5px;">
         <table style="width: 100%; border-collapse: collapse; color: #ffffff; font-family: sans-serif; font-size: 13px;">
@@ -404,17 +403,14 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
             pos_count = int(g["Carteiras"] * np.random.uniform(0.06, 0.85))
             pos_pct = (pos_count / g["Carteiras"]) * 100
             
-            # Proporção Long / Short para a barra dividida
             long_pct = (l_val / tot_val) * 100
             short_pct = 100 - long_pct
             
-            # Winners / Losers simulados com base nas posições
             winners_count = int(pos_count * np.random.uniform(0.42, 0.55))
             losers_count = pos_count - winners_count
             winners_pct = (winners_count / pos_count) * 100 if pos_count > 0 else 50
             losers_pct = 100 - winners_pct
 
-            # Cores de viés baseadas no texto
             if "Very Bullish" in g["Bias"]:
                 bias_style = "border: 1px solid #10b981; color: #34d399; background: rgba(16, 185, 129, 0.1);"
             elif "Bullish" in g["Bias"]:
@@ -432,7 +428,6 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
                     </td>
                     <td style="padding: 10px 8px; color: #e5e7eb;">{g['Carteiras']:,}</td>
                     
-                    <!-- In Position com barra de progresso fina -->
                     <td style="padding: 10px 8px;">
                         <div style="font-size: 12px; margin-bottom: 4px; color: #e5e7eb;">{pos_count:,} ({pos_pct:.2f}%)</div>
                         <div style="background: #1f2937; width: 100%; height: 4px; border-radius: 2px;">
@@ -440,7 +435,6 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
                         </div>
                     </td>
                     
-                    <!-- Long vs Short Position (Barra Dividida Proporcional) -->
                     <td style="padding: 10px 8px;">
                         <div style="display: flex; height: 26px; border-radius: 4px; overflow: hidden; font-size: 11px; font-weight: bold; line-height: 26px; text-align: center;">
                             <div style="background: #34d399; color: #000000; width: {long_pct}%; overflow: hidden; white-space: nowrap; padding: 0 4px;" title="Long: ${l_val:,.2f}M">
@@ -454,7 +448,6 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
                     
                     <td style="padding: 10px 8px; font-weight: bold; color: #ffffff;">${tot_val:,.2f}M</td>
                     
-                    <!-- Winners vs Losers (Barra Dividida Proporcional) -->
                     <td style="padding: 10px 8px;">
                         <div style="display: flex; height: 26px; border-radius: 4px; overflow: hidden; font-size: 11px; font-weight: bold; line-height: 26px; text-align: center;">
                             <div style="background: #34d399; color: #000000; width: {winners_pct}%; overflow: hidden; white-space: nowrap; padding: 0 4px;" title="Winners: {winners_count:,}">
@@ -466,7 +459,6 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
                         </div>
                     </td>
                     
-                    <!-- Wallet Bias -->
                     <td style="padding: 10px 8px; text-align: center;">
                         <span style="{bias_style} padding: 4px 12px; border-radius: 14px; font-size: 11px; font-weight: bold; display: inline-block;">
                             {g['Bias']}
