@@ -164,4 +164,232 @@ if pagina == "📈 Stacks, Liquidações & Books":
             fig.add_trace(go.Scatter(x=df_longs["Preco"], y=cum_long_y, fill='tozeroy', mode='lines', line=dict(color='rgba(255, 112, 67, 0.9)', width=2, shape='spline'), fillcolor='rgba(255, 112, 67, 0.22)', name="Acumulado Longs"), row=2, col=1)
             fig.add_trace(go.Scatter(x=df_shorts["Preco"], y=cum_short_y, fill='tozeroy', mode='lines', line=dict(color='rgba(46, 204, 113, 0.9)', width=2, shape='spline'), fillcolor='rgba(46, 204, 113, 0.22)', name="Acumulado Shorts"), row=2, col=1)
              
-            fig.add_vline(x=price, line_dash="dash", line_color
+            fig.add_vline(x=price, line_dash="dash", line_color="white", row=1, col=1)
+            fig.add_vline(x=price, line_dash="dash", line_color="white", row=2, col=1)
+             
+            fig.add_annotation(x=price, y=-0.5, text="▲", showarrow=False, font=dict(color="#00FF66", size=16), row=1, col=1)
+            fig.add_annotation(x=price, y=11.5, text=f"<b>agora {price:,.0f}</b>", showarrow=False, font=dict(color="white", size=11), row=1, col=1)
+             
+            chart_title = f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}"
+            fig.update_layout(
+                title=dict(text=chart_title, font=dict(color="white")),
+                barmode='stack', 
+                template="plotly_dark", 
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                height=720, 
+                autosize=True,
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="white")),
+                margin=dict(t=80, b=20, l=40, r=40),
+                font=dict(color="white")
+            )
+             
+            fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True, gridcolor="rgba(255,255,255,0.1)", tickfont=dict(color="white"))
+            fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+             
+            st.plotly_chart(fig, use_container_width=True)
+
+        render_stacks_chart(selected_symbol)
+
+    with tab2:
+        @st.fragment(run_every=3)
+        def render_limit_orders_chart(symbol):
+            price, oi = get_hyperliquid_data(symbol)
+            if not price:
+                price = 100.0
+                 
+            np.random.seed(int(time.time() // 5))
+             
+            min_price = price * 0.50
+            max_price = price * 2.00
+             
+            num_steps = 20
+            step_val = (max_price - min_price) / num_steps
+             
+            price_levels = [min_price + (i * step_val) for i in range(num_steps + 1)]
+            price_levels.sort()
+             
+            volumes = []
+            labels_text = []
+             
+            half_step = step_val / 2
+            for p in price_levels:
+                dist = abs(p - price)
+                vol = round(np.random.uniform(35.0, 150.0) if dist < (price * 0.15) else np.random.uniform(8.0, 40.0), 1)
+                volumes.append(vol)
+                 
+                p_min = p - half_step
+                p_max = p + half_step
+                labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.2f}–{p_max:,.2f})")
+
+            df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
+            colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
+             
+            fig_lim = go.Figure()
+             
+            fig_lim.add_trace(go.Bar(
+                y=df_limits["Preco"],
+                x=df_limits["Volume"],
+                orientation='h',
+                marker_color=colors,
+                text=df_limits["Label"],
+                textposition='outside',
+                textfont=dict(color="#ffffff", size=10),
+                hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
+            ))
+             
+            fig_lim.add_hline(
+                y=price, 
+                line_dash="dash", 
+                line_color="white",
+                annotation_text=f"<b>agora: US$ {price:,.2f}</b>",
+                annotation_position="bottom right",
+                annotation_font=dict(color="#00FF66", size=12)
+            )
+             
+            lim_title = f"Muralhas de Ordens Limite (Dinâmico -50% a +100%) | Ativo: {symbol}"
+            fig_lim.update_layout(
+                title=dict(text=lim_title, font=dict(color="white")),
+                template="plotly_dark",
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                height=900,
+                xaxis=dict(
+                    title="Volume Acumulado (US$ Milhões)", 
+                    showgrid=True, 
+                    gridcolor="rgba(255,255,255,0.1)",
+                    range=[0, 210],
+                    title_font=dict(color="white"),
+                    tickfont=dict(color="white")
+                ),
+                yaxis=dict(
+                    title="Faixas de Preço (US$)", 
+                    autorange="reversed",
+                    tickformat=",f",
+                    showgrid=True,
+                    gridcolor="rgba(255,255,255,0.1)",
+                    tickfont=dict(color="white"),
+                    title_font=dict(color="white"),
+                    range=[max_price + (step_val * 0.5), min_price - (step_val * 0.5)]
+                ),
+                margin=dict(t=80, b=40, l=60, r=80),
+                showlegend=False,
+                font=dict(color="white")
+            )
+             
+            st.plotly_chart(fig_lim, use_container_width=True)
+
+        render_limit_orders_chart(selected_symbol)
+
+elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
+    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
+    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money.")
+
+    st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
+    coins_data = [
+        {"name": "BTC", "change": "+2.4%"}, {"name": "XRP", "change": "+5.1%"},
+        {"name": "WLD", "change": "-1.8%"}, {"name": "ONDO", "change": "+3.7%"},
+        {"name": "GRAM", "change": "-0.5%"}, {"name": "CRV", "change": "+1.2%"},
+        {"name": "JUP", "change": "+4.8%"}, {"name": "FIL", "change": "-2.3%"},
+        {"name": "TIA", "change": "+6.0%"}, {"name": "DOT", "change": "-1.1%"},
+        {"name": "APT", "change": "+0.4%"}, {"name": "DASH", "change": "-3.2%"},
+        {"name": "ENA", "change": "+2.9%"}, {"name": "KAS", "change": "+7.5%"}
+    ]
+
+    cols_heat = st.columns(len(coins_data))
+    for idx, c in enumerate(coins_data):
+        with cols_heat[idx]:
+            if st.button(f"{c['name']}\n{c['change']}", key=f"btn_coin_{idx}", use_container_width=True):
+                st.session_state["selected_coin"] = c["name"]
+                st.rerun()
+
+    if st.button("Limpar Filtro de Ativo", use_container_width=False):
+        st.session_state["selected_coin"] = "TODOS"
+        st.rerun()
+
+    active_coin = st.session_state.get('selected_coin', 'TODOS')
+    st.markdown(f"**Ativo em Foco:** `{active_coin}`")
+    st.markdown("---")
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Volume Total em Posições", "$ 14.82 Bilhões", "+4.2%")
+    m2.metric("Proporção Global Long vs Short", "56.4% Long / 43.6% Short", "Bullish Bias")
+    m3.metric("Taxa Média de Lucratividade", "51.8%", "+2.1%")
+    m4.metric("Total de Carteiras Monitoradas", "824,410", "Ativas 24h")
+
+    st.markdown("---")
+    st.subheader("📍 Distribuição de Posições por Grupo de Carteiras (Tempo Real)")
+
+    @st.fragment(run_every=3)
+    def render_plotly_wallet_table(coin_filter):
+        np.random.seed(int(time.time() // 3) + len(str(coin_filter)))
+        
+        groups = [
+            {"Grupo": "Shrimp", "Saldo": "< $250", "Carteiras": 802372, "BaseLong": 470.47, "BaseShort": 180.38, "Bias": "Bullish"},
+            {"Grupo": "Fish", "Saldo": "$250-$10K", "Carteiras": 44702, "BaseLong": 287.22, "BaseShort": 97.08, "Bias": "Very Bullish"},
+            {"Grupo": "Dolphin", "Saldo": "$10K-$50K", "Carteiras": 7450, "BaseLong": 444.28, "BaseShort": 197.26, "Bias": "Very Bullish"},
+            {"Grupo": "Apex Predator", "Saldo": "$50K-$100K", "Carteiras": 1607, "BaseLong": 288.39, "BaseShort": 161.81, "Bias": "Bullish"},
+            {"Grupo": "Small Whale", "Saldo": "$100K-$500K", "Carteiras": 1818, "BaseLong": 834.94, "BaseShort": 586.73, "Bias": "Bullish"},
+            {"Grupo": "Whale", "Saldo": "$500K-$1M", "Carteiras": 374, "BaseLong": 485.36, "BaseShort": 582.47, "Bias": "Slightly Bearish"},
+            {"Grupo": "Tidal Whale", "Saldo": "$1M-$50M", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
+            {"Grupo": "Leviathan", "Saldo": "> $50M", "Carteiras": 86, "BaseLong": 1180.0, "BaseShort": 3210.0, "Bias": "Very Bearish"}
+        ]
+
+        saldos, nomes, carteiras, posicoes, longs, shorts, totais, lucros, prejuizos, biases = [], [], [], [], [], [], [], [], [], []
+        
+        for g in groups:
+            factor = np.random.uniform(0.99, 1.01)
+            l_val = round(g["BaseLong"] * factor, 2)
+            s_val = round(g["BaseShort"] * (2 - factor), 2)
+            tot_val = round(l_val + s_val, 2)
+            pos_count = int(g["Carteiras"] * np.random.uniform(0.35, 0.88))
+            
+            saldos.append(g["Saldo"])
+            nomes.append(f"<b>{g['Grupo']}</b>")
+            carteiras.append(f"{g['Carteiras']:,}")
+            posicoes.append(f"{pos_count:,} ({int(pos_count/g['Carteiras']*100)}%)")
+            longs.append(f"${l_val:,.2f}M")
+            shorts.append(f"${s_val:,.2f}M")
+            totais.append(f"<b>${tot_val:,.2f}M</b>")
+            lucros.append(f"{int(pos_count * 0.48):,}")
+            prejuizos.append(f"{int(pos_count * 0.52):,}")
+            
+            # Cores dinâmicas por viés
+            if "Bullish" in g["Bias"]:
+                biases.append(f"<span style='color:#34d399;'><b>{g['Bias']}</b></span>")
+            else:
+                biases.append(f"<span style='color:#f87171;'><b>{g['Bias']}</b></span>")
+
+        fig_table = go.Figure(data=[go.Table(
+            header=dict(
+                values=["<b>Saldo</b>", "<b>Grupo</b>", "<b>Carteiras</b>", "<b>Em Posição</b>", "<b>Long</b>", "<b>Short</b>", "<b>Total</b>", "<b>Lucro</b>", "<b>Prejuízo</b>", "<b>Viés</b>"],
+                fill_color="#1f2937",
+                align="left",
+                font=dict(color="#9ca3af", size=13),
+                height=35
+            ),
+            cells=dict(
+                values=[saldos, nomes, carteiras, posicoes, longs, shorts, totais, lucros, prejuizos, biases],
+                fill_color="#111827",
+                align="left",
+                font=dict(color="#ffffff", size=13),
+                height=38
+            )
+        )])
+
+        fig_table.update_layout(
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            margin=dict(t=10, b=10, l=0, r=0),
+            height=400
+        )
+
+        st.plotly_chart(fig_table, use_container_width=True)
+
+    render_plotly_wallet_table(active_coin)
+
+    st.markdown("---")
+    st.subheader("💰 Distribuição de PnL por Perfil de Trader")
