@@ -108,7 +108,7 @@ def get_market_changes():
                 sign = "+" if val >= 0 else ""
                 coins_result.append({"name": coin, "change": f"{sign}{val:.2f}%"})
             else:
-                coins_result.append({"name": coin, "change": "+0.00%"})
+                coins_result.append({"name": coin, "change": "+0.00%</em>"})
     except Exception:
         for coin in target_coins:
             coins_result.append({"name": coin, "change": "+1.5%"})
@@ -332,10 +332,10 @@ if pagina == "📈 Stacks, Liquidações & Books":
         render_limit_orders_chart(selected_symbol)
 
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
-    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras[cite: 1]")
-    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money[cite: 1].")
+    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
+    st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias, tubarões e smart money.")
 
-    st.subheader("🌐 Mapa de Calor de Ativos On-Chain (Dados Reais API)")
+    st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
     coins_data = get_market_changes()
 
     cols_heat = st.columns(len(coins_data))
@@ -363,7 +363,7 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     st.subheader("📍 Distribuição de Posições por Grupo de Carteiras (Tempo Real)")
 
     @st.fragment(run_every=3)
-    def render_clean_wallet_table(coin_filter):
+    def render_custom_visual_table(coin_filter):
         np.random.seed(int(time.time() // 3) + len(str(coin_filter)))
         
         groups = [
@@ -377,40 +377,116 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
             {"Saldo": "> $50M", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
         ]
 
-        table_data = []
+        # Montar tabela HTML estilizada idêntica à referência oficial
+        html_content = """
+        <div style="background-color: #0e1117; border-radius: 8px; overflow-x: auto; padding: 5px;">
+        <table style="width: 100%; border-collapse: collapse; color: #ffffff; font-family: sans-serif; font-size: 13px;">
+            <thead>
+                <tr style="border-bottom: 2px solid #1f2937; text-align: left; color: #9ca3af;">
+                    <th style="padding: 12px 8px;">Position Group</th>
+                    <th style="padding: 12px 8px;">Wallets</th>
+                    <th style="padding: 12px 8px; width: 18%;">In Position</th>
+                    <th style="padding: 12px 8px; width: 22%;">Long vs Short Position</th>
+                    <th style="padding: 12px 8px;">Total Position</th>
+                    <th style="padding: 12px 8px; width: 22%;">Winners vs Losers</th>
+                    <th style="padding: 12px 8px; text-align: center;">Wallet Bias</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+
         for g in groups:
             factor = np.random.uniform(0.99, 1.01)
             l_val = round(g["BaseLong"] * factor, 2)
             s_val = round(g["BaseShort"] * (2 - factor), 2)
             tot_val = round(l_val + s_val, 2)
-            pos_count = int(g["Carteiras"] * np.random.uniform(0.06, 0.85))
-            pos_pct = int((pos_count / g["Carteiras"]) * 100)
             
-            table_data.append({
-                "Saldo": g["Saldo"],
-                "Grupo": g["Grupo"],
-                "Carteiras": f"{g['Carteiras']:,}",
-                "Em Posição": f"{pos_count:,} ({pos_pct}%)",
-                "Long": f"${l_val:,.2f}M" if l_val < 1000 else f"${l_val/1000:,.2f}B",
-                "Short": f"${s_val:,.2f}M" if s_val < 1000 else f"${s_val/1000:,.2f}B",
-                "Total": f"${tot_val:,.2f}M" if tot_val < 1000 else f"${tot_val/1000:,.2f}B",
-                "Lucro": f"{int(pos_count * 0.48):,}",
-                "Prejuízo": f"{int(pos_count * 0.52):,}",
-                "Viés": g["Bias"]
-            })
+            pos_count = int(g["Carteiras"] * np.random.uniform(0.06, 0.85))
+            pos_pct = (pos_count / g["Carteiras"]) * 100
+            
+            # Proporção Long / Short para a barra dividida
+            long_pct = (l_val / tot_val) * 100
+            short_pct = 100 - long_pct
+            
+            # Winners / Losers simulados com base nas posições
+            winners_count = int(pos_count * np.random.uniform(0.42, 0.55))
+            losers_count = pos_count - winners_count
+            winners_pct = (winners_count / pos_count) * 100 if pos_count > 0 else 50
+            losers_pct = 100 - winners_pct
 
-        df_display = pd.DataFrame(table_data)
-        st.dataframe(df_display, use_container_width=True, hide_index=True)
+            # Cores de viés baseadas no texto
+            if "Very Bullish" in g["Bias"]:
+                bias_style = "border: 1px solid #10b981; color: #34d399; background: rgba(16, 185, 129, 0.1);"
+            elif "Bullish" in g["Bias"]:
+                bias_style = "border: 1px solid #059669; color: #34d399; background: rgba(5, 150, 105, 0.1);"
+            elif "Slightly Bearish" in g["Bias"]:
+                bias_style = "border: 1px solid #dc2626; color: #f87171; background: rgba(220, 38, 38, 0.1);"
+            else:
+                bias_style = "border: 1px solid #991b1b; color: #f87171; background: rgba(153, 27, 27, 0.1);"
 
-    render_clean_wallet_table(active_coin)
+            html_content += f"""
+                <tr style="border-bottom: 1px solid #1f2937; height: 55px;">
+                    <td style="padding: 10px 8px;">
+                        <span style="color: #9ca3af; font-size: 11px; display: block;">{g['Saldo']}</span>
+                        <b style="color: #ffffff; font-size: 14px;">{g['Grupo']}</b>
+                    </td>
+                    <td style="padding: 10px 8px; color: #e5e7eb;">{g['Carteiras']:,}</td>
+                    
+                    <!-- In Position com barra de progresso fina -->
+                    <td style="padding: 10px 8px;">
+                        <div style="font-size: 12px; margin-bottom: 4px; color: #e5e7eb;">{pos_count:,} ({pos_pct:.2f}%)</div>
+                        <div style="background: #1f2937; width: 100%; height: 4px; border-radius: 2px;">
+                            <div style="background: #34d399; width: {pos_pct}%; height: 4px; border-radius: 2px;"></div>
+                        </div>
+                    </td>
+                    
+                    <!-- Long vs Short Position (Barra Dividida Proporcional) -->
+                    <td style="padding: 10px 8px;">
+                        <div style="display: flex; height: 26px; border-radius: 4px; overflow: hidden; font-size: 11px; font-weight: bold; line-height: 26px; text-align: center;">
+                            <div style="background: #34d399; color: #000000; width: {long_pct}%; overflow: hidden; white-space: nowrap; padding: 0 4px;" title="Long: ${l_val:,.2f}M">
+                                ${l_val:,.2f}M
+                            </div>
+                            <div style="background: #f87171; color: #ffffff; width: {short_pct}%; overflow: hidden; white-space: nowrap; padding: 0 4px;" title="Short: ${s_val:,.2f}M">
+                                ${s_val:,.2f}M
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <td style="padding: 10px 8px; font-weight: bold; color: #ffffff;">${tot_val:,.2f}M</td>
+                    
+                    <!-- Winners vs Losers (Barra Dividida Proporcional) -->
+                    <td style="padding: 10px 8px;">
+                        <div style="display: flex; height: 26px; border-radius: 4px; overflow: hidden; font-size: 11px; font-weight: bold; line-height: 26px; text-align: center;">
+                            <div style="background: #34d399; color: #000000; width: {winners_pct}%; overflow: hidden; white-space: nowrap; padding: 0 4px;" title="Winners: {winners_count:,}">
+                                {winners_count:,}
+                            </div>
+                            <div style="background: #f87171; color: #ffffff; width: {losers_pct}%; overflow: hidden; white-space: nowrap; padding: 0 4px;" title="Losers: {losers_count:,}">
+                                {losers_count:,}
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Wallet Bias -->
+                    <td style="padding: 10px 8px; text-align: center;">
+                        <span style="{bias_style} padding: 4px 12px; border-radius: 14px; font-size: 11px; font-weight: bold; display: inline-block;">
+                            {g['Bias']}
+                        </span>
+                    </td>
+                </tr>
+            """
+
+        html_content += "</tbody></table></div>"
+        st.markdown(html_content, unsafe_allow_html=True)
+
+    render_custom_visual_table(active_coin)
 
     st.markdown("---")
     st.subheader("💰 Distribuição de PnL por Perfil de Trader")
 
     pnl_data = [
-        {"Perfil": "Money Printer", "Carteiras": "764", "Em Posição": "333 (43.59%)", "Long": "$2.42B", "Short": "$2.91B", "Total": "$5.33B", "Lucro": "213", "Prejuizo": "158", "Viés": "Bearish[cite: 10]"},
-        {"Perfil": "Smart Money", "Carteiras": "3,378", "Em Posição": "1,102 (32.63%)", "Long": "$1.22B", "Short": "$657M", "Total": "$1.88B", "Lucro": "711", "Prejuizo": "594", "Viés": "Slightly Bearish[cite: 10]"},
-        {"Perfil": "Arbitrage Pro", "Carteiras": "10,811", "Em Posição": "2,737 (25.32%)", "Long": "$474M", "Short": "$208M", "Total": "$682M", "Lucro": "1,941", "Prejuizo": "1,575", "Viés": "Bullish[cite: 10]"}
+        {"Perfil": "Money Printer", "Carteiras": "764", "Em Posição": "333 (43.59%)", "Long": "$2.42B", "Short": "$2.91B", "Total": "$5.33B", "Lucro": "213", "Prejuizo": "158", "Viés": "Bearish"},
+        {"Perfil": "Smart Money", "Carteiras": "3,378", "Em Posição": "1,102 (32.63%)", "Long": "$1.22B", "Short": "$657M", "Total": "$1.88B", "Lucro": "711", "Prejuizo": "594", "Viés": "Slightly Bearish"},
+        {"Perfil": "Arbitrage Pro", "Carteiras": "10,811", "Em Posição": "2,737 (25.32%)", "Long": "$474M", "Short": "$208M", "Total": "$682M", "Lucro": "1,941", "Prejuizo": "1,575", "Viés": "Bullish"}
     ]
 
     df_pnl = pd.DataFrame(pnl_data)
