@@ -173,4 +173,46 @@ if pagina == "📈 Stacks, Liquidações & Books":
                 textposition="top center",
                 textfont=dict(color="#ffffff", size=10),
                 name="Liquidação de Grande Player",
-                hovertemplate="<b>Grande Player Liquidado</b><br>Preço: US$ %{x:,.2f}<br
+                hovertemplate="<b>Grande Player Liquidado</b><br>Preço: US$ %{x:,.2f}<br>Volume: $%{text}<extra></extra>"
+            ), row=1, col=1)
+             
+            cum_long_y = np.cumsum(df_longs["Vol_Base"] + df_longs["Vol_Extrema"])[::-1]
+            cum_short_y = np.cumsum(df_shorts["Vol_Base"] + df_shorts["Vol_Extrema"])
+             
+            fig.add_trace(go.Scatter(x=df_longs["Preco"], y=cum_long_y, fill='tozeroy', mode='lines', line=dict(color='rgba(255, 112, 67, 0.9)', width=2, shape='spline'), fillcolor='rgba(255, 112, 67, 0.22)', name="Acumulado Longs"), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_shorts["Preco"], y=cum_short_y, fill='tozeroy', mode='lines', line=dict(color='rgba(46, 204, 113, 0.9)', width=2, shape='spline'), fillcolor='rgba(46, 204, 113, 0.22)', name="Acumulado Shorts"), row=2, col=1)
+             
+            fig.add_vline(x=price, line_dash="dash", line_color="white", row=1, col=1)
+            fig.add_vline(x=price, line_dash="dash", line_color="white", row=2, col=1)
+             
+            fig.add_annotation(x=price, y=-0.5, text="▲", showarrow=False, font=dict(color="#00FF66", size=16), row=1, col=1)
+            fig.add_annotation(x=price, y=11.5, text=f"<b>agora {price:,.0f}</b>", showarrow=False, font=dict(color="white", size=11), row=1, col=1)
+             
+            chart_title = f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}"
+            fig.update_layout(
+                title=dict(text=chart_title, font=dict(color="white")),
+                barmode='stack', 
+                template="plotly_dark", 
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                height=720, 
+                autosize=True,
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="white")),
+                margin=dict(t=80, b=20, l=40, r=40),
+                font=dict(color="white")
+            )
+             
+            fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True, gridcolor="rgba(255,255,255,0.1)", tickfont=dict(color="white"))
+            fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+             
+            st.plotly_chart(fig, use_container_width=True)
+
+        render_stacks_chart(selected_symbol)
+
+    with tab2:
+        @st.fragment(run_every=3)
+        def render_limit_orders_chart(symbol):
+            price, oi = get_hyperliquid_data
