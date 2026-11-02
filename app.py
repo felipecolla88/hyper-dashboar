@@ -1,7 +1,9 @@
 # ==========================================
-# PÁGINA: CAPTURA & ROMPIMENTOS (1 DIA vs 1 SEMANA)
+# NAVEGAÇÃO PRINCIPAL DAS PÁGINAS
 # ==========================================
-elif pagina == "🎯 Captura & Rompimentos (Baleias)":
+
+# 1. PRIMEIRA PÁGINA COMEÇA COM IF
+if pagina == "🎯 Captura & Rompimentos (Baleias)":
     
     # Barra de Ferramentas Superior estilo terminal
     t1, t2, t3, t4, t5 = st.columns(5)
@@ -27,7 +29,6 @@ elif pagina == "🎯 Captura & Rompimentos (Baleias)":
     with col_1d:
         st.markdown("#### 1 dia <span style='font-size:12px; color:#9ca3af;'>posições abertas nas últimas 24 h</span>", unsafe_allow_html=True)[cite: 12]
         
-        # Card Vermelho de Captura Abaixo (72%)
         st.error("▼ **72% captura abaixo primeiro em 1 dia**\nzona 2.250–2.264 | ▲ 28% | nenhuma <1%")[cite: 12]
         st.caption("Binance - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar 2.299")[cite: 12]
         
@@ -67,7 +68,6 @@ elif pagina == "🎯 Captura & Rompimentos (Baleias)":
     with col_1w:
         st.markdown("#### 1 semana <span style='font-size:12px; color:#9ca3af;'>posições abertas nos últimos 7 dias</span>", unsafe_allow_html=True)[cite: 12]
         
-        # Card Verde de Captura Acima (59%)
         st.success("▲ **59% captura acima primeiro em 1 sem**\nzona 2.319–2.333 | ▼ 41% | nenhuma <1%")[cite: 12]
         st.caption("Binance - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar 2.304")[cite: 12]
         
@@ -93,7 +93,7 @@ elif pagina == "🎯 Captura & Rompimentos (Baleias)":
                 height=360,
                 margin=dict(t=20, b=20, l=30, r=30),
                 showlegend=False,
-                xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
+                xaxis=dict(gridcolor="rgba255,255,255,0.05)"),
                 yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="US$ 200,0 mi")[cite: 12]
             )
             return fig
@@ -114,3 +114,13 @@ elif pagina == "🎯 Captura & Rompimentos (Baleias)":
     with col_r2:
         st.markdown("**ABAIXO · ZONA DE VÁCUO CRÍTICA**")
         st.error("▼ **2.120 - 2.200**\n\n*espaço vazio de ordens; abaixo de 2.200 o preço pode acelerar rápido*")[cite: 12]
+
+# 2. SEGUNDA PÁGINA USA ELIF
+elif pagina == "📈 Stacks, Liquidações & Books":
+    st.title("⚡ Hyperliquid - Painel Quantitativo Profissional")
+    # ... (restante do código das outras abas)
+
+# 3. TERCEIRA PÁGINA USA ELIF
+elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
+    st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
+    # ... (restante do código da distribuição de carteiras)
