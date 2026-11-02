@@ -148,7 +148,7 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
             fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
             fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#FF7043", name="Shorts"))
             
-            fig.add_vline(x=base_px, line_dash="dash", line_color="#ffffff", width=1.5)
+            fig.add_vline(x=base_px, line_dash="dash", line_color="#ffffff", line_width=1.5)
             fig.add_annotation(x=base_px, y=max(max(longs), max(shorts))*1.05, text=f"agora {base_px:,.1f}", showarrow=False, font=dict(color="#ffffff", size=11))
             
             vacuo_target = base_px * 0.93
@@ -195,7 +195,7 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
             fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
             fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#00C853", name="Shorts"))
             
-            fig.add_vline(x=base_px, line_dash="dash", line_color="#ffffff", width=1.5)
+            fig.add_vline(x=base_px, line_dash="dash", line_color="#ffffff", line_width=1.5)
             fig.add_annotation(x=base_px, y=max(max(longs), max(shorts))*1.05, text=f"agora {base_px:,.1f}", showarrow=False, font=dict(color="#ffffff", size=11))
             
             cascata_target = base_px * 1.10
