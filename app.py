@@ -4,8 +4,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 st.set_page_config(
     page_title="Hyperliquid - Ecossistema Quantitativo Real",
@@ -53,10 +52,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- FUNÇÃO DE DADOS REAIS DA HYPERLIQUID ---
+# --- FUNÇÃO DE DADOS REAIS E AGREGAÇÃO DO BOOK L2 ---
 @st.cache_data(ttl=5)
-def get_hyperliquid_real_data(target_asset="BTC"):
-    """Busca preço mark real, open interest e livro de ordens direto da API da Hyperliquid."""
+def get_real_market_liquidity(target_asset="BTC"):
+    """Busca dados Mark Price, Open Interest e agrupa o L2 Book real por faixas de preço."""
     try:
         url = "https://api.hyperliquid.xyz/info"
         payload = {"type": "metaAndAssetCtxs"}
@@ -73,7 +72,7 @@ def get_hyperliquid_real_data(target_asset="BTC"):
                     open_int = float(ctx["openInterest"])
                     break
         
-        # Buscar L2 Book real para refinar distribuição
+        # Buscar L2 Book real
         book_payload = {"type": "l2Book", "coin": target_asset}
         book_resp = requests.post(url, json=book_payload, timeout=3)
         bids, asks = [], []
@@ -94,18 +93,18 @@ st.sidebar.markdown("---")
 pagina = st.sidebar.radio(
     "Navegação:",
     [
-        "📊 Stacks & Liquidações (Dados Reais)",
+        "📊 Perfil de Liquidez Real (L2 Book Agregado)",
         "🧱 Muralha de Ordens Limite (Book L2 Real)"
     ]
 )
 st.sidebar.markdown("---")
-st.sidebar.info("Gráficos baseados no livro de ofertas e preço Mark oficiais da Hyperliquid.")
+st.sidebar.info("Gráficos baseados exclusivamente no livro de ofertas L2 e dados Mark oficiais.")
 
 # =====================================================================
-# PÁGINA 1: STACKS & LIQUIDAÇÕES COM DADOS REAIS
+# PÁGINA 1: PERFIL DE LIQUIDEZ REAL (L2 BOOK AGREGADO)
 # =====================================================================
-if pagina == "📊 Stacks & Liquidações (Dados Reais)":
-    st.title("⚡ Hyperliquid - Painel de Liquidez e Stacks (Real)")
+if pagina == "📊 Perfil de Liquidez Real (L2 Book Agregado)":
+    st.title("⚡ Hyperliquid - Perfil de Liquidez e Ofertas Reais")
 
     col1, col2 = st.columns([2, 5])
     with col1:
@@ -115,66 +114,99 @@ if pagina == "📊 Stacks & Liquidações (Dados Reais)":
             index=0
         )
 
-    price, oi, bids, asks = get_hyperliquid_real_data(selected_symbol)
+    price, oi, raw_bids, raw_asks = get_real_market_liquidity(selected_symbol)
     if price == 0.0:
         price = 81500.0 if selected_symbol == 'BTC' else 2271.2
 
-    # Construir distribuição baseada na variação real do preço em torno do Mark Price
-    step_size = price * 0.0015
-    prices = [price + i*step_size for i in range(-70, 71) if abs(i) > 0]
-    prices.sort()
+    # Processar e agrupar os Bids e Asks reais em faixas (bins) proporcionais ao preço
+    bin_size = price * 0.002  # Intervalo de agrupamento dinâmico (0.2% do preço)
+    
+    def process_book_side(orders, is_bid=True):
+        if not orders:
+            return pd.DataFrame(columns=["Bin", "Volume"])
+        
+        df = pd.DataFrame(orders, columns=["px", "sz", "n"])
+        df["px"] = df["px"].astype(float)
+        df["sz"] = df["sz"].astype(float)
+        
+        # Filtrar apenas o range relevante próximo ao preço atual (±15%)
+        if is_bid:
+            df = df[(df["px"] >= price * 0.85) & (df["px"] <= price)]
+        else:
+            df = df[(df["px"] <= price * 1.15) & (df["px"] >= price)]
+            
+        if df.empty:
+            return pd.DataFrame(columns=["Bin", "Volume"])
+            
+        df["Bin"] = (df["px"] / bin_size).round() * bin_size
+        grouped = df.groupby("Bin")["sz"].sum().reset_index()
+        grouped.rename(columns={"sz": "Volume"}, inplace=True)
+        return grouped
 
-    vol_base, vol_extrema = [], []
-    for p in prices:
-        dist = abs(p - price)
-        # Distribuição proporcional ao Open Interest real capturado
-        v_base = max(0.5, (oi * 0.00005) * (1 / (1 + dist/(price*0.04))))
-        v_ext = max(0.1, (oi * 0.00002) * (2.5 if (price*0.005) < dist < (price*0.025) else 0.05))
-        vol_base.append(round(v_base, 2))
-        vol_extrema.append(round(v_ext, 2))
-
-    df = pd.DataFrame({"Preco": prices, "Vol_Base": vol_base, "Vol_Extrema": vol_extrema})
-    df_longs = df[df["Preco"] < price]
-    df_shorts = df[df["Preco"] > price]
+    df_bids_agg = process_book_side(raw_bids, is_bid=True)
+    df_asks_agg = process_book_side(raw_asks, is_bid=False)
 
     fig = make_subplots(
         rows=2, cols=1, 
-        row_heights=[0.78, 0.22], 
+        row_heights=[0.75, 0.25], 
         vertical_spacing=0.03,
         shared_xaxes=True
     )
 
-    COLOR_BASE_AZUL = "#1E88E5"
-    COLOR_EXTREMA = "#FF7043"
+    # Cores assimétricas baseadas nas paredes reais de ordens
+    if not df_bids_agg.empty:
+        fig.add_trace(go.Bar(
+            x=df_bids_agg["Bin"], y=df_bids_agg["Volume"], 
+            marker_color="#1E88E5", name="Paredes de Compra (Bids Reais)"
+        ), row=1, col=1)
 
-    fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Base"], marker_color=COLOR_BASE_AZUL, name="Alavancagem Normal/Média"), row=1, col=1)
-    fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Extrema"], marker_color=COLOR_EXTREMA, name="Alavancagem Extrema"), row=1, col=1)
-    fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False), row=1, col=1)
-    fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False), row=1, col=1)
+    if not df_asks_agg.empty:
+        fig.add_trace(go.Bar(
+            x=df_asks_agg["Bin"], y=df_asks_agg["Volume"], 
+            marker_color="#FF7043", name="Paredes de Venda (Asks Reais)"
+        ), row=1, col=1)
 
-    cum_long_y = np.cumsum(df_longs["Vol_Base"] + df_longs["Vol_Extrema"])[::-1]
-    cum_short_y = np.cumsum(df_shorts["Vol_Base"] + df_shorts["Vol_Extrema"])
+    # Curvas de acumulação real baseadas no book
+    if not df_bids_agg.empty:
+        cum_bids = df_bids_agg.sort_values("Bin", ascending=False)
+        cum_bids["CumVol"] = cum_bids["Volume"].cumsum()
+        fig.add_trace(go.Scatter(
+            x=cum_bids["Bin"], y=cum_bids["CumVol"], 
+            fill='tozeroy', mode='lines', line=dict(color='rgba(30, 136, 229, 0.9)', width=2),
+            fillcolor='rgba(30, 136, 229, 0.2)', name="Acumulado Bids"
+        ), row=2, col=1)
 
-    fig.add_trace(go.Scatter(x=df_longs["Preco"], y=cum_long_y, fill='tozeroy', mode='lines', line=dict(color='rgba(255, 112, 67, 0.9)', width=2), fillcolor='rgba(255, 112, 67, 0.2)', name="Acumulado Longs"), row=2, col=1)
-    fig.add_trace(go.Scatter(x=df_shorts["Preco"], y=cum_short_y, fill='tozeroy', mode='lines', line=dict(color='rgba(46, 204, 113, 0.9)', width=2), fillcolor='rgba(46, 204, 113, 0.2)', name="Acumulado Shorts"), row=2, col=1)
+    if not df_asks_agg.empty:
+        cum_asks = df_asks_agg.sort_values("Bin", ascending=True)
+        cum_asks["CumVol"] = cum_asks["Volume"].cumsum()
+        fig.add_trace(go.Scatter(
+            x=cum_asks["Bin"], y=cum_asks["CumVol"], 
+            fill='tozeroy', mode='lines', line=dict(color='rgba(255, 112, 67, 0.9)', width=2),
+            fillcolor='rgba(255, 112, 67, 0.2)', name="Acumulado Asks"
+        ), row=2, col=1)
 
-    fig.add_vline(x=price, line_dash="dash", line_color="white", row=1, col=1)
-    fig.add_vline(x=price, line_dash="dash", line_color="white", row=2, col=1)
+    fig.add_vline(x=price, line_dash="dash", line_color="#00FF66", row=1, col=1)
+    fig.add_vline(x=price, line_dash="dash", line_color="#00FF66", row=2, col=1)
 
-    fig.add_annotation(x=price, y=max(vol_base)*1.1, text=f"<b>agora {price:,.2f}</b>", showarrow=False, font=dict(color="white", size=11), row=1, col=1)
+    fig.add_annotation(
+        x=price, y=0.95, yref="paper",
+        text=f"<b>Preço Atual: US$ {price:,.2f}</b>",
+        showarrow=False, font=dict(color="#00FF66", size=12),
+        bgcolor="#0c0e12", bordercolor="#00FF66", borderwidth=1
+    )
 
     fig.update_layout(
-        title=dict(text=f"Ativo: {selected_symbol} | Preço Mark Real: US$ {price:,.2f} | Open Interest: {oi:,.0f}", font=dict(color="white")),
-        barmode='stack', template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
-        height=720, showlegend=True,
+        title=dict(text=f"Ativo: {selected_symbol} | Open Interest Real: {oi:,.0f} contratos", font=dict(color="white")),
+        template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
+        height=750, showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="white")),
         margin=dict(t=80, b=20, l=40, r=40)
     )
 
     fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, gridcolor="rgba(255,255,255,0.05)")
-    fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, gridcolor="rgba(255,255,255,0.05)")
-    fig.update_yaxes(title_text="Volume (US$ mi)", row=1, col=1, gridcolor="rgba(255,255,255,0.05)")
-    fig.update_yaxes(title_text="Acumulado O.I.", row=2, col=1, gridcolor="rgba(255,255,255,0.05)")
+    fig.update_xaxes(title_text="Níveis de Preço Agregados (US$)", row=2, col=1, gridcolor="rgba(255,255,255,0.05)")
+    fig.update_yaxes(title_text="Volume L2 (Size)", row=1, col=1, gridcolor="rgba(255,255,255,0.05)")
+    fig.update_yaxes(title_text="Acumulado Book", row=2, col=1, gridcolor="rgba(255,255,255,0.05)")
 
     st.plotly_chart(fig, use_container_width=True)
 
@@ -182,17 +214,16 @@ if pagina == "📊 Stacks & Liquidações (Dados Reais)":
 # PÁGINA 2: MURALHA DE ORDENS LIMITE (BOOK L2 REAL)
 # =====================================================================
 elif pagina == "🧱 Muralha de Ordens Limite (Book L2 Real)":
-    st.title("🧱 Livro de Ofertas e Muralhas de Limite (Dados Reais L2)")
+    st.title("🧱 Muralhas de Ordens Limite (Livro L2 Real da Hyperliquid)")
 
     selected_symbol = st.selectbox("Selecione o Ativo:", options=['BTC', 'ETH', 'SOL', 'XRP', 'SUI'], index=0)
-    price, oi, bids, asks = get_hyperliquid_real_data(selected_symbol)
+    price, oi, raw_bids, raw_asks = get_real_market_liquidity(selected_symbol)
 
     if price == 0.0:
         price = 81500.0
 
-    # Processar bids e asks reais extraídos da API
-    df_bids = pd.DataFrame(bids, columns=["px", "sz", "n"]) if bids else pd.DataFrame(columns=["px", "sz"])
-    df_asks = pd.DataFrame(asks, columns=["px", "sz", "n"]) if asks else pd.DataFrame(columns=["px", "sz"])
+    df_bids = pd.DataFrame(raw_bids, columns=["px", "sz", "n"]) if raw_bids else pd.DataFrame(columns=["px", "sz"])
+    df_asks = pd.DataFrame(raw_asks, columns=["px", "sz", "n"]) if raw_asks else pd.DataFrame(columns=["px", "sz"])
 
     fig_lim = go.Figure()
 
@@ -222,10 +253,10 @@ elif pagina == "🧱 Muralha de Ordens Limite (Book L2 Real)":
     )
 
     fig_lim.update_layout(
-        title=dict(text=f"Muralhas de Ordens Limite (L2 Real) | Ativo: {selected_symbol}", font=dict(color="white")),
+        title=dict(text=f"Muralhas de Ordens Limite | Ativo: {selected_symbol}", font=dict(color="white")),
         template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
-        height=800,
-        xaxis=dict(title="Tamanho do Lote (Size)", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
+        height=850,
+        xaxis=dict(title="Tamanho do Lote Real (Size)", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
         yaxis=dict(title="Faixas de Preço (US$)", autorange="reversed", showgrid=True, gridcolor="rgba(255,255,255,0.05)"),
         showlegend=True
     )
