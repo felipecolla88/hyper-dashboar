@@ -138,7 +138,7 @@ if pagina == "🎯 Livro de Ofertas e Liquidez (API Real)":
     with col_ex:
         st.markdown("**Fonte:** `API Hyperliquid /l2Book` (Dados Reais)")
 
-    price, oi, prev_px = get_hyperliquid_data(sym)
+    price, oi, prev_px = get_hyperliquid_real_data(sym)
     df_bids, df_asks = get_hyperliquid_orderbook(sym)
     
     col_m1, col_m2, col_m3 = st.columns(3)
@@ -149,7 +149,6 @@ if pagina == "🎯 Livro de Ofertas e Liquidez (API Real)":
 
     st.markdown("---")
     
-    # Gráficos separados para Bids (Ordens de Compra) e Asks (Ordens de Venda) Reais
     c_bid, c_ask = st.columns(2)
     
     with c_bid:
@@ -195,9 +194,9 @@ elif pagina == "🌐 Monitor Multiativos (Hyperliquid & Binance)":
     ativos = ["BTC", "ETH", "SOL", "XRP", "SUI", "AVAX"]
     
     dados_tabela = []
-    for a inativos in ativos:
+    for a in ativos:
         # Dados Hyperliquid
-        hp_price, hp_oi, hp_prev = get_hyperliquid_data(a)
+        hp_price, hp_oi, hp_prev = get_hyperliquid_real_data(a)
         hp_chg = ((hp_price - hp_prev) / hp_prev * 100) if hp_prev > 0 else 0.0
         
         # Dados Binance Futures equivalents
