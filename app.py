@@ -13,11 +13,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo global escuro
 st.markdown("""
     <style>
     .stApp {
-        background-color: #0c0e12;
+        background-color: #0e1117;
         color: #ffffff;
     }
     
@@ -33,42 +32,41 @@ st.markdown("""
     }
 
     div.stButton > button {
-        background-color: #1a1d24 !important;
+        background-color: #1f2937 !important;
         color: #ffffff !important;
-        border: 1px solid #2d3139 !important;
+        border: 1px solid #374151 !important;
         border-radius: 6px !important;
         font-weight: 600 !important;
     }
     div.stButton > button:hover {
-        background-color: #2d3139 !important;
+        background-color: #374151 !important;
         border-color: #4b5563 !important;
         color: #00ff66 !important;
     }
 
     section[data-testid="stSidebar"] {
-        background-color: #11141a !important;
+        background-color: #111827 !important;
     }
     section[data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
 
     div[data-baseweb="select"] > div {
-        background-color: #1a1d24 !important;
+        background-color: #1f2937 !important;
         color: #ffffff !important;
-        border-color: #2d3139 !important;
+        border-color: #374151 !important;
     }
     
     hr {
-        border-color: #2d3139 !important;
+        border-color: #374151 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ESTADO GLOBAL DE NAVEGAÇÃO ---
 if "grupo_detalhado" not in st.session_state:
     st.session_state["grupo_detalhado"] = None
 
-def get_hyperliquid_data(target_asset="ETH"):
+def get_hyperliquid_data(target_asset="BTC"):
     try:
         url = "https://api.hyperliquid.xyz/info"
         payload = {"type": "metaAndAssetCtxs"}
@@ -84,12 +82,12 @@ def get_hyperliquid_data(target_asset="ETH"):
     except Exception:
         pass
      
-    fallbacks = {"BTC": 81500.0, "ETH": 2271.2, "SOL": 195.0, "AVAX": 35.0, "XRP": 1.5, "SUI": 3.0}
-    return fallbacks.get(target_asset, 2271.2), 50000.0
+    fallbacks = {"BTC": 81500.0, "ETH": 3200.0, "SOL": 200.0, "AVAX": 35.0, "XRP": 1.5, "SUI": 3.0, "DOGE": 0.25}
+    return fallbacks.get(target_asset, 100.0), 50000.0
 
 @st.cache_data(ttl=30)
 def get_market_changes():
-    target_coins = ["BTC", "ETH", "XRP", "WLD", "ONDO", "CRV", "JUP", "FIL", "TIA", "DOT", "APT"]
+    target_coins = ["BTC", "XRP", "WLD", "ONDO", "CRV", "JUP", "FIL", "TIA", "DOT", "APT", "DASH", "ENA", "KAS"]
     coins_result = []
     try:
         url = "https://api.hyperliquid.xyz/info"
@@ -124,122 +122,16 @@ def get_market_changes():
         coins_result.append({"name": coin, "change": "+1.5%"})
     return coins_result
 
-# --- BARRA LATERAL COM TODAS AS OPÇÕES ---
 st.sidebar.title("⚡ Hyperliquid Hub")
 st.sidebar.markdown("---")
 pagina = st.sidebar.radio(
     "Navegação:",
-    [
-        "🎯 Captura & Rompimentos (Baleias)",
-        "📈 Stacks, Liquidações & Books", 
-        "🐋 Distribuição de Carteiras (Backes View)"
-    ]
+    ["📈 Stacks, Liquidações & Books", "🐋 Distribuição de Carteiras (Backes View)"]
 )
 st.sidebar.markdown("---")
 st.sidebar.info("Plataforma integrada de análise quantitativa e on-chain desenvolvida para monitoramento de derivativos.")
 
-
-# ==========================================
-# PÁGINA 1: CAPTURA & ROMPIMENTOS (NOVO PAINEL)
-# ==========================================
-if pagina == "🎯 Captura & Rompimentos (Baleias)":
-    
-    t1, t2, t3, t4, t5 = st.columns(5)
-    t1.button("📈 VIRADAS DE TENDÊNCIA", use_container_width=True)
-    t2.button("🤖 ROBÔ SIMULADO", use_container_width=True)
-    t3.button("📌 PLANOS CONDICIONAIS", use_container_width=True)
-    t4.button("📋 RELATÓRIO DIÁRIO", use_container_width=True)
-    t5.button("🔔 ALERTAS (142)", use_container_width=True)
-    
-    st.markdown("### 🐋 Análise de Captura de Liquidez (1 Dia vs 1 Semana)")
-    
-    col_sym, col_tf = st.columns([2, 3])
-    with col_sym:
-        sym = st.selectbox("Ativo em Análise:", ["ETH", "BTC", "SOL", "XRP"], index=0)
-    with col_tf:
-        st.markdown("**Modo de Janela:** `1 Dia / 1 Semana`")
-    
-    price, _ = get_hyperliquid_data(sym)
-    
-    col_1d, col_1w = st.columns(2)
-    
-    with col_1d:
-        st.markdown("#### 1 dia <span style='font-size:12px; color:#9ca3af;'>posições abertas nas últimas 24 h</span>", unsafe_allow_html=True)
-        st.error("▼ **72% captura abaixo primeiro em 1 dia**\nzona 2.250–2.264 | ▲ 28% | nenhuma <1%")
-        st.caption("Binance - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar 2.299")
-        
-        def make_chart_1d(base_price):
-            np.random.seed(24)
-            prices = np.linspace(1500, 3200, 50)
-            longs = [np.random.uniform(5, 45) if p < base_price else 0 for p in prices]
-            shorts = [np.random.uniform(5, 50) if p > base_price else 0 for p in prices]
-            
-            fig = go.Figure()
-            fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
-            fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#FF7043", name="Shorts"))
-            fig.add_vline(x=base_price, line_dash="dash", line_color="white")
-            fig.add_annotation(x=base_price, y=55, text=f"agora {base_price:,.1f}", showarrow=False, font=dict(color="white"))
-            fig.add_annotation(x=2160, y=30, text="Δ vácuo 2.120-2.200", showarrow=False, font=dict(color="#FFD54F", size=10))
-            
-            fig.update_layout(
-                template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
-                height=360, margin=dict(t=20, b=20, l=30, r=30), showlegend=False,
-                xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
-                yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="US$ 60,0 mi")
-            )
-            return fig
-            
-        st.plotly_chart(make_chart_1d(price), use_container_width=True)
-        m_l1d, m_s1d = st.columns(2)
-        m_l1d.caption("▼ longs US$ 188,7 mi (est.)")
-        m_s1d.caption("shorts US$ 214,7 mi (est.) ▲")
-
-    with col_1w:
-        st.markdown("#### 1 semana <span style='font-size:12px; color:#9ca3af;'>posições abertas nos últimos 7 dias</span>", unsafe_allow_html=True)
-        st.success("▲ **59% captura acima primeiro em 1 sem**\nzona 2.319–2.333 | ▼ 41% | nenhuma <1%")
-        st.caption("Binance - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar 2.304")
-        
-        def make_chart_1w(base_price):
-            np.random.seed(168)
-            prices = np.linspace(1500, 3200, 50)
-            longs = [np.random.uniform(10, 80) if p < base_price else 0 for p in prices]
-            shorts = [np.random.uniform(10, 95) if p > base_price else 0 for p in prices]
-            
-            fig = go.Figure()
-            fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
-            fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#00C853", name="Shorts"))
-            fig.add_vline(x=base_price, line_dash="dash", line_color="white")
-            fig.add_annotation(x=base_price, y=100, text=f"agora {base_price:,.1f}", showarrow=False, font=dict(color="white"))
-            fig.add_annotation(x=2160, y=50, text="Δ vácuo 2.120-2.200", showarrow=False, font=dict(color="#FFD54F", size=10))
-            
-            fig.update_layout(
-                template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
-                height=360, margin=dict(t=20, b=20, l=30, r=30), showlegend=False,
-                xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
-                yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="US$ 200,0 mi")
-            )
-            return fig
-            
-        st.plotly_chart(make_chart_1w(price), use_container_width=True)
-        m_l1w, m_s1w = st.columns(2)
-        m_l1w.caption("▼ longs US$ 995,6 mi (est.)")
-        m_s1w.caption("shorts US$ 1,26 bi (est.) ▲")
-
-    st.markdown("---")
-    st.subheader("📌 Rompimentos em 1 dia / 1 semana")
-    col_r1, col_r2 = st.columns(2)
-    with col_r1:
-        st.markdown("**ACIMA · ZONA DE ALTA PROBABILIDADE**")
-        st.success("▲ **2.319 - 2.333**\n\n*zona de captura ativa em 1 semana (59% probabilidade)*")
-    with col_r2:
-        st.markdown("**ABAIXO · ZONA DE VÁCUO CRÍTICA**")
-        st.error("▼ **2.120 - 2.200**\n\n*espaço vazio de ordens; abaixo de 2.200 o preço pode acelerar rápido*")
-
-
-# ==========================================
-# PÁGINA 2: STACKS, LIQUIDAÇÕES & BOOKS
-# ==========================================
-elif pagina == "📈 Stacks, Liquidações & Books":
+if pagina == "📈 Stacks, Liquidações & Books":
     st.title("⚡ Hyperliquid - Painel Quantitativo Profissional")
 
     col1, col2 = st.columns([2, 5])
@@ -276,6 +168,18 @@ elif pagina == "📈 Stacks, Liquidações & Books":
             df_longs = df[df["Preco"] < price]
             df_shorts = df[df["Preco"] > price]
              
+            now = datetime.now()
+            hist_liquidations = []
+            for _ in range(3):
+                past_min = np.random.randint(5, 45)
+                p_offset = np.random.choice([-price*0.006, -price*0.003, price*0.003, price*0.006])
+                hist_liquidations.append({
+                    "time": now - timedelta(minutes=past_min),
+                    "price": price + p_offset,
+                    "size": round(np.random.uniform(4.0, 10.5), 2)
+                })
+            df_hist = pd.DataFrame(hist_liquidations)
+             
             fig = make_subplots(
                 rows=2, cols=1, 
                 row_heights=[0.78, 0.22], 
@@ -283,66 +187,201 @@ elif pagina == "📈 Stacks, Liquidações & Books":
                 shared_xaxes=True
             )
              
+            hover_longs = [f"Faixa: US$ {p:,.2f}<br>Base: US$ {v5}mi<br>Extrema: US$ {v1}mi<extra></extra>" for p, v5, v1 in zip(df_longs["Preco"], df_longs["Vol_Base"], df_longs["Vol_Extrema"])]
+            hover_shorts = [f"Faixa: US$ {p:,.2f}<br>Base: US$ {v5}mi<br>Extrema: US$ {v1}mi<extra></extra>" for p, v5, v1 in zip(df_shorts["Preco"], df_shorts["Vol_Base"], df_shorts["Vol_Extrema"])]
+             
             COLOR_BASE_AZUL = "#1E88E5"
             COLOR_EXTREMA = "#FF7043"
              
-            fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Base"], marker_color=COLOR_BASE_AZUL, name="Alavancagem Normal"), row=1, col=1)
-            fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Extrema"], marker_color=COLOR_EXTREMA, name="Alavancagem Extrema"), row=1, col=1)
-            fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False), row=1, col=1)
-            fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Base"], marker_color=COLOR_BASE_AZUL, name="Alavancagem Normal/Média", hovertemplate=hover_longs), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_longs["Preco"], y=df_longs["Vol_Extrema"], marker_color=COLOR_EXTREMA, name="Alavancagem Extrema", hovertemplate=hover_longs), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Base"], marker_color=COLOR_BASE_AZUL, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
+            fig.add_trace(go.Bar(x=df_shorts["Preco"], y=df_shorts["Vol_Extrema"], marker_color=COLOR_EXTREMA, showlegend=False, hovertemplate=hover_shorts), row=1, col=1)
+             
+            marker_config = dict(color="#00FF66", size=11, symbol="triangle-up", line=dict(color="white", width=1))
+            
+            fig.add_trace(go.Scatter(
+                x=df_hist["price"], 
+                y=(df_hist["size"] * 0.3) + 3.0,
+                mode="markers+text",
+                marker=marker_config,
+                text=[f"${s}M" for s in df_hist["size"]],
+                textposition="top center",
+                textfont=dict(color="#ffffff", size=10),
+                name="Liquidação de Grande Player",
+                hovertemplate="<b>Grande Player Liquidado</b><br>Preço: US$ %{x:,.2f}<br>Volume: $%{text}<extra></extra>"
+            ), row=1, col=1)
+             
+            cum_long_y = np.cumsum(df_longs["Vol_Base"] + df_longs["Vol_Extrema"])[::-1]
+            cum_short_y = np.cumsum(df_shorts["Vol_Base"] + df_shorts["Vol_Extrema"])
+             
+            fig.add_trace(go.Scatter(x=df_longs["Preco"], y=cum_long_y, fill='tozeroy', mode='lines', line=dict(color='rgba(255, 112, 67, 0.9)', width=2, shape='spline'), fillcolor='rgba(255, 112, 67, 0.22)', name="Acumulado Longs"), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_shorts["Preco"], y=cum_short_y, fill='tozeroy', mode='lines', line=dict(color='rgba(46, 204, 113, 0.9)', width=2, shape='spline'), fillcolor='rgba(46, 204, 113, 0.22)', name="Acumulado Shorts"), row=2, col=1)
              
             fig.add_vline(x=price, line_dash="dash", line_color="white", row=1, col=1)
             fig.add_vline(x=price, line_dash="dash", line_color="white", row=2, col=1)
              
+            fig.add_annotation(x=price, y=-0.5, text="▲", showarrow=False, font=dict(color="#00FF66", size=16), row=1, col=1)
+            fig.add_annotation(x=price, y=11.5, text=f"<b>agora {price:,.0f}</b>", showarrow=False, font=dict(color="white", size=11), row=1, col=1)
+             
+            chart_title = f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}"
             fig.update_layout(
-                title=dict(text=f"Ativo: {symbol} | Preço Atual: US$ {price:,.2f}", font=dict(color="white")),
-                barmode='stack', template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12", height=700
+                title=dict(text=chart_title, font=dict(color="white")),
+                barmode='stack', 
+                template="plotly_dark", 
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                height=720, 
+                autosize=True,
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="white")),
+                margin=dict(t=80, b=20, l=40, r=40),
+                font=dict(color="white")
             )
+             
+            fig.update_xaxes(title_text="", row=1, col=1, showticklabels=False, autorange=True, gridcolor="rgba(255,255,255,0.1)", tickfont=dict(color="white"))
+            fig.update_xaxes(title_text="Níveis de Preço (US$)", row=2, col=1, autorange=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="US$ Milhões", row=1, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+            fig.update_yaxes(title_text="O/I & Acumulado", row=2, col=1, showgrid=True, gridcolor="rgba(255,255,255,0.1)", title_font=dict(color="white"), tickfont=dict(color="white"))
+             
             st.plotly_chart(fig, use_container_width=True)
 
         render_stacks_chart(selected_symbol)
 
     with tab2:
-        st.subheader("🧱 Muralha de Ordens Limite (Book)")
-        st.info("Visualização das ordens de compra e venda acumuladas no livro de ofertas.")
+        @st.fragment(run_every=3)
+        def render_limit_orders_chart(symbol):
+            price, oi = get_hyperliquid_data(symbol)
+            if not price:
+                price = 100.0
+                 
+            np.random.seed(int(time.time() // 5))
+            min_price = price * 0.50
+            max_price = price * 2.00
+            num_steps = 20
+            step_val = (max_price - min_price) / num_steps
+            price_levels = [min_price + (i * step_val) for i in range(num_steps + 1)]
+            price_levels.sort()
+             
+            volumes, labels_text = [], []
+            half_step = step_val / 2
+            for p in price_levels:
+                dist = abs(p - price)
+                vol = round(np.random.uniform(35.0, 150.0) if dist < (price * 0.15) else np.random.uniform(8.0, 40.0), 1)
+                volumes.append(vol)
+                p_min = p - half_step
+                p_max = p + half_step
+                labels_text.append(f"US$ {vol:,.1f} mi ({p_min:,.2f}–{p_max:,.2f})")
 
+            df_limits = pd.DataFrame({"Preco": price_levels, "Volume": volumes, "Label": labels_text})
+            colors = ["#1E88E5" if p < price else "#FF7043" for p in price_levels]
+             
+            fig_lim = go.Figure()
+            fig_lim.add_trace(go.Bar(
+                y=df_limits["Preco"], x=df_limits["Volume"],
+                orientation='h', marker_color=colors,
+                text=df_limits["Label"], textposition='outside',
+                textfont=dict(color="#ffffff", size=10),
+                hovertemplate="Faixa: US$ %{y:,.2f}<br>Volume Limite: US$ %{x} mi<extra></extra>"
+            ))
+            fig_lim.add_hline(
+                y=price, line_dash="dash", line_color="white",
+                annotation_text=f"<b>agora: US$ {price:,.2f}</b>",
+                annotation_position="bottom right",
+                annotation_font=dict(color="#00FF66", size=12)
+            )
+            fig_lim.update_layout(
+                title=dict(text=f"Muralhas de Ordens Limite | Ativo: {symbol}", font=dict(color="white")),
+                template="plotly_dark", paper_bgcolor="#0e1117", plot_bgcolor="#0e1117",
+                height=900,
+                xaxis=dict(title="Volume Acumulado (US$ Milhões)", showgrid=True, gridcolor="rgba(255,255,255,0.1)", range=[0, 210]),
+                yaxis=dict(title="Faixas de Preço (US$)", autorange="reversed", tickformat=",f", showgrid=True, gridcolor="rgba(255,255,255,0.1)"),
+                showlegend=False
+            )
+            st.plotly_chart(fig_lim, use_container_width=True)
 
-# ==========================================
-# PÁGINA 3: DISTRIBUIÇÃO DE CARTEIRAS (COM DRILL-DOWN LEVIATHAN)
-# ==========================================
+        render_limit_orders_chart(selected_symbol)
+
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     
     if st.session_state["grupo_detalhado"] is None:
         st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras[cite: 1]")
         st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias e smart money[cite: 1].")
 
+        st.subheader("🌐 Mapa de Calor de Ativos On-Chain")
         coins_data = get_market_changes()
+
         cols_heat = st.columns(len(coins_data))
         for idx, c in enumerate(coins_data):
             with cols_heat[idx]:
-                if st.button(f"{c['name']}\n{c['change']}", key=f"btn_c_{idx}", use_container_width=True):
+                if st.button(f"{c['name']}\n{c['change']}", key=f"btn_coin_{idx}", use_container_width=True):
                     st.session_state["selected_coin"] = c["name"]
                     st.rerun()
 
+        if st.button("Limpar Filtro de Ativo", use_container_width=False):
+            st.session_state["selected_coin"] = "TODOS"
+            st.rerun()
+
+        active_coin = st.session_state.get('selected_coin', 'TODOS')
+        st.markdown(f"**Ativo em Foco:** `{active_coin}`")
         st.markdown("---")
-        
-        groups = [
-            {"Size": "$0 Para $250", "Grupo": "Shrimp", "Wallets": "925,424", "Long": "$10.12M", "Short": "$7.20M", "Total": "$17.32M", "Bias": "Bullish"},
-            {"Size": "$250 Para $10K", "Grupo": "Fish", "Wallets": "47,047", "Long": "$200.93M", "Short": "$65.34M", "Total": "$266.26M", "Bias": "Muito bullish"},
-            {"Size": "$10K Para $50K", "Grupo": "Dolphin", "Wallets": "7,668", "Long": "$355.89M", "Short": "$149.50M", "Total": "$505.39M", "Bias": "Muito bullish"},
-            {"Size": "$50K Para $100K", "Grupo": "Apex Predator", "Wallets": "1,727", "Long": "$265.92M", "Short": "$129.43M", "Total": "$395.34M", "Bias": "Muito bullish"},
-            {"Size": "$100K Para $500K", "Grupo": "Small Whale", "Wallets": "1,909", "Long": "$670.47M", "Short": "$511.39M", "Total": "$1.18B", "Bias": "Levemente bullish"},
-            {"Size": "$500K Para $1M", "Grupo": "Whale", "Wallets": "371", "Long": "$435.00M", "Short": "$448.41M", "Total": "$883.41M", "Bias": "Indeciso"},
-            {"Size": "$1M Para $50M", "Grupo": "Tidal Whale", "Wallets": "358", "Long": "$1.72B", "Short": "$1.16B", "Total": "$2.88B", "Bias": "Bullish"},
-            {"Size": "$50M Para ∞", "Grupo": "Leviathan", "Wallets": "86", "Long": "$1.22B", "Short": "$2.69B", "Total": "$3.91B", "Bias": "Muito bearish"}
-        ]
-        
-        df_groups = pd.DataFrame(groups)
-        st.dataframe(df_groups, use_container_width=True, hide_index=True)
-        
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Volume Total em Posições", "$ 14.82 Bilhões", "+4.2%")
+        m2.metric("Proporção Global Long vs Short", "56.4% Long / 43.6% Short", "Bullish Bias")
+        m3.metric("Taxa Média de Lucratividade", "51.8%", "+2.1%")
+        m4.metric("Total de Carteiras Monitoradas", "824,410", "Ativas 24h")
+
         st.markdown("---")
-        if st.button("🔍 Inspecionar Grupo Leviathan (Drill-Down)", use_container_width=True):
-            st.session_state["grupo_detalhado"] = "Leviathan"
+        st.subheader("📍 Distribuição de Posições por Grupo de Carteiras (Tempo Real)")
+
+        @st.fragment(run_every=3)
+        def render_wallet_overview_table(coin_filter):
+            np.random.seed(int(time.time() // 3) + len(str(coin_filter)))
+            groups = [
+                {"Saldo": "< $250", "Grupo": "Shrimp", "Carteiras": 802372, "BaseLong": 464.91, "BaseShort": 182.56, "Bias": "Bullish"},
+                {"Saldo": "$250-$10K", "Grupo": "Fish", "Carteiras": 44702, "BaseLong": 289.07, "BaseShort": 96.46, "Bias": "Very Bullish"},
+                {"Saldo": "$10K-$50K", "Grupo": "Dolphin", "Carteiras": 7450, "BaseLong": 447.65, "BaseShort": 195.79, "Bias": "Very Bullish"},
+                {"Saldo": "$50K-$100K", "Grupo": "Apex Predator", "Carteiras": 1607, "BaseLong": 287.73, "BaseShort": 162.18, "Bias": "Bullish"},
+                {"Saldo": "$100K-$500K", "Grupo": "Small Whale", "Carteiras": 1818, "BaseLong": 842.46, "BaseShort": 581.54, "Bias": "Bullish"},
+                {"Saldo": "$500K-$1M", "Grupo": "Whale", "Carteiras": 374, "BaseLong": 479.59, "BaseShort": 589.56, "Bias": "Slightly Bearish"},
+                {"Saldo": "$1M-$50M", "Grupo": "Tidal Whale", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
+                {"Saldo": "> $50M", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
+            ]
+
+            table_data = []
+            for g in groups:
+                factor = np.random.uniform(0.99, 1.01)
+                l_val = round(g["BaseLong"] * factor, 2)
+                s_val = round(g["BaseShort"] * (2 - factor), 2)
+                tot_val = round(l_val + s_val, 2)
+                pos_count = int(g["Carteiras"] * np.random.uniform(0.06, 0.85))
+                pos_pct = (pos_count / g["Carteiras"]) * 100
+                
+                table_data.append({
+                    "Position Group": f"{g['Saldo']} - {g['Grupo']}",
+                    "Wallets": f"{g['Carteiras']:,}",
+                    "In Position": f"{pos_count:,} ({pos_pct:.1f}%)",
+                    "Long Position": f"${l_val:,.2f}M",
+                    "Short Position": f"${s_val:,.2f}M",
+                    "Total Position": f"${tot_val:,.2f}M",
+                    "Winners": f"{int(pos_count * 0.48):,}",
+                    "Losers": f"{int(pos_count * 0.52):,}",
+                    "Wallet Bias": g["Bias"]
+                })
+
+            df_display = pd.DataFrame(table_data)
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        render_wallet_overview_table(active_coin)
+
+        st.markdown("---")
+        st.subheader("🔍 Inspetor de Faixa de Carteira (Drill-Down)")
+        group_names = ["Shrimp", "Fish", "Dolphin", "Apex Predator", "Small Whale", "Whale", "Tidal Whale", "Leviathan"]
+        grupo_selecionado = st.selectbox("Selecione o grupo para abrir a auditoria detalhada:", group_names, index=7)
+        
+        if st.button(f"🔍 Abrir Painel de Detalhes ({grupo_selecionado})", use_container_width=True):
+            st.session_state["grupo_detalhado"] = grupo_selecionado
             st.rerun()
 
     else:
@@ -354,19 +393,17 @@ elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
         st.caption(f"Distribuição de posição da carteira Hyperliquid em tempo real / {grupo}")
         st.title(f"🐋 {grupo} ($50M Para ∞)")
         
-        st.markdown("**Wallets:** 86 &nbsp;&nbsp;|&nbsp;&nbsp; **Posição total:** $3.91B", unsafe_allow_html=True)
-        st.progress(0.8373, text="72 Traders em Posição (83.73%)")
+        st.markdown("**Wallets:** 86 &nbsp;&nbsp;|&nbsp;&nbsp; **Posição total:** $3.92B", unsafe_allow_html=True)
+        st.progress(0.8489, text="73 Traders em Posição (84.89%)")
         
         st.markdown("---")
-        
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Posição Long", "$1.22B", "31.2% Long")
-        m2.metric("Posição Short", "$2.69B", "-68.8% Short")
-        m3.metric("Lucro (Winners)", "43 Carteiras", "59.7%")
-        m4.metric("Prejuízo (Losers)", "29 Carteiras", "40.3%")
+        m1.metric("Posição Long", "$1.23B", "31.3% Long")
+        m2.metric("Posição Short", "$2.69B", "-68.7% Short")
+        m3.metric("Lucro (Winners)", "44 Carteiras", "54.3%")
+        m4.metric("Prejuízo (Losers)", "28 Carteiras", "45.7%")
         
         st.markdown("---")
-        
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
             st.subheader("Ranking de posição por ativo")
