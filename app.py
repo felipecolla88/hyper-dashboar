@@ -87,6 +87,34 @@ def get_hyperliquid_data(target_asset="ETH"):
     fallbacks = {"BTC": 81500.0, "ETH": 2271.2, "SOL": 195.0, "AVAX": 35.0, "XRP": 1.5, "SUI": 3.0}
     return fallbacks.get(target_asset, 2271.2), 50000.0
 
+# FUNÇÃO REAL PARA BUSCAR O LIVRO DE OFERTAS (L2 BOOK) DA HYPERLIQUID
+@st.cache_data(ttl=5)
+def get_hyperliquid_orderbook(target_asset="ETH"):
+    try:
+        url = "https://api.hyperliquid.xyz/info"
+        payload = {"type": "l2Book", "coin": target_asset}
+        response = requests.post(url, json=payload, timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            levels = data.get("levels", [[], []])
+            bids = levels[0] # Compras (preço, quantidade)
+            asks = levels[1] # Vendas (preço, quantidade)
+            
+            df_bids = pd.DataFrame(bids, columns=["px", "sz", "n"]) if bids else pd.DataFrame(columns=["px", "sz"])
+            df_asks = pd.DataFrame(asks, columns=["px", "sz", "n"]) if asks else pd.DataFrame(columns=["px", "sz"])
+            
+            if not df_bids.empty:
+                df_bids["px"] = df_bids["px"].astype(float)
+                df_bids["sz"] = df_bids["sz"].astype(float)
+            if not df_asks.empty:
+                df_asks["px"] = df_asks["px"].astype(float)
+                df_asks["sz"] = df_asks["sz"].astype(float)
+                
+            return df_bids, df_asks
+    except Exception:
+        pass
+    return pd.DataFrame(columns=["px", "sz"]), pd.DataFrame(columns=["px", "sz"])
+
 @st.cache_data(ttl=30)
 def get_market_changes():
     target_coins = ["BTC", "ETH", "XRP", "WLD", "ONDO", "CRV", "JUP", "FIL", "TIA", "DOT", "APT"]
@@ -124,29 +152,26 @@ def get_market_changes():
         coins_result.append({"name": coin, "change": "+1.5%"})
     return coins_result
 
-# =====================================================================
-# 1. DEFINIÇÃO DA BARRA LATERAL (PRECISA VIR ANTES DA VARIÁVEL 'pagina')
-# =====================================================================
+# --- BARRA LATERAL ---
 st.sidebar.title("⚡ Hyperliquid Hub")
 st.sidebar.markdown("---")
 pagina = st.sidebar.radio(
     "Navegação:",
     [
-        "🎯 Captura & Rompimentos (Baleias)",
+        "🎯 Captura & Rompimentos (Dados Reais API)",
         "📈 Stacks, Liquidações & Books", 
         "🐋 Distribuição de Carteiras (Backes View)"
     ]
 )
 st.sidebar.markdown("---")
-st.sidebar.info("Plataforma integrada de análise quantitativa e on-chain desenvolvida para monitoramento de derivativos.")
+st.sidebar.info("Plataforma integrada com dados diretos da API pública da Hyperliquid.")
 
 
 # =====================================================================
-# 2. VERIFICAÇÃO DAS PÁGINAS (AGORA A VARIÁVEL 'pagina' JÁ EXISTE)
+# PÁGINA 1: CAPTURA & ROMPIMENTOS COM DADOS REAIS DE ORDER BOOK
 # =====================================================================
-
-if pagina == "🎯 Captura & Rompimentos (Baleias)":
-    # Barra de Ferramentas Superior estilo terminal
+if pagina == "🎯 Captura & Rompimentos (Dados Reais API)":
+    
     t1, t2, t3, t4, t5 = st.columns(5)
     t1.button("📈 VIRADAS DE TENDÊNCIA", use_container_width=True)
     t2.button("🤖 ROBÔ SIMULADO", use_container_width=True)
@@ -154,79 +179,65 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
     t4.button("📋 RELATÓRIO DIÁRIO", use_container_width=True)
     t5.button("🔔 ALERTAS (142)", use_container_width=True)
     
-    st.markdown("### 🐋 Análise de Captura de Liquidez (1 Dia vs 1 Semana)")
+    st.markdown("### 🐋 Livro de Ordens e Liquidez Real (API Hyperliquid L2)")
     
     col_sym, col_tf = st.columns([2, 3])
     with col_sym:
-        sym = st.selectbox("Ativo em Análise:", ["ETH", "BTC", "SOL", "XRP"], index=0)
+        sym = st.selectbox("Ativo em Análise:", ["ETH", "BTC", "SOL", "XRP", "SUI"], index=0)
     with col_tf:
-        st.markdown("**Modo de Janela:** `1 Dia / 1 Semana`")
+        st.markdown("**Fonte de Dados:** `API Oficial Hyperliquid (L2 Book em Tempo Real)`")
     
-    price, _ = get_hyperliquid_data(sym)
+    # Obter preço atual real e o order book real da API
+    price, oi = get_hyperliquid_data(sym)
+    df_bids, df_asks = get_hyperliquid_orderbook(sym)
     
     col_1d, col_1w = st.columns(2)
     
     with col_1d:
-        st.markdown("#### 1 dia <span style='font-size:12px; color:#9ca3af;'>posições abertas nas últimas 24 h</span>", unsafe_allow_html=True)
-        st.error("▼ **72% captura abaixo primeiro em 1 dia**\nzona 2.250–2.264 | ▲ 28% | nenhuma <1%")
-        st.caption("Binance - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar 2.299")
+        st.markdown(f"#### Livro de Ordens de Compra (Bids) — {sym}", unsafe_allow_html=True)
+        st.success(f"Preço de Referência Atual: **US$ {price:,.2f}** | Open Interest: **US$ {oi:,.0f}**")
         
-        def make_chart_1d(base_price):
-            np.random.seed(24)
-            prices = np.linspace(1500, 3200, 50)
-            longs = [np.random.uniform(5, 45) if p < base_price else 0 for p in prices]
-            shorts = [np.random.uniform(5, 50) if p > base_price else 0 for p in prices]
-            
+        def make_real_bids_chart(df, current_price):
             fig = go.Figure()
-            fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
-            fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#FF7043", name="Shorts"))
-            fig.add_vline(x=base_price, line_dash="dash", line_color="white")
-            fig.add_annotation(x=base_price, y=55, text=f"agora {base_price:,.1f}", showarrow=False, font=dict(color="white"))
-            fig.add_annotation(x=2160, y=30, text="Δ vácuo 2.120-2.200", showarrow=False, font=dict(color="#FFD54F", size=10))
-            
+            if not df.empty:
+                fig.add_trace(go.Bar(
+                    x=df["px"], y=df["sz"], 
+                    marker_color="#1E88E5", 
+                    name="Ordens de Compra (Bids)"
+                ))
+            fig.add_vline(x=current_price, line_dash="dash", line_color="#00FF66", annotation_text=f"Preço Atual: {current_price:,.2f}")
             fig.update_layout(
                 template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
                 height=360, margin=dict(t=20, b=20, l=30, r=30), showlegend=False,
-                xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
-                yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="US$ 60,0 mi")
+                xaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="Preço (US$)"),
+                yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="Tamanho da Ordem (Size)")
             )
             return fig
             
-        st.plotly_chart(make_chart_1d(price), use_container_width=True)
-        m_l1d, m_s1d = st.columns(2)
-        m_l1d.caption("▼ longs US$ 188,7 mi (est.)")
-        m_s1d.caption("shorts US$ 214,7 mi (est.) ▲")
+        st.plotly_chart(make_real_bids_chart(df_bids, price), use_container_width=True)
 
     with col_1w:
-        st.markdown("#### 1 semana <span style='font-size:12px; color:#9ca3af;'>posições abertas nos últimos 7 dias</span>", unsafe_allow_html=True)
-        st.success("▲ **59% captura acima primeiro em 1 sem**\nzona 2.319–2.333 | ▼ 41% | nenhuma <1%")
-        st.caption("Binance - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar 2.304")
+        st.markdown(f"#### Livro de Ordens de Venda (Asks) — {sym}", unsafe_allow_html=True)
+        st.error(f"Resistências Ativas no Book L2 da Hyperliquid para **{sym}**")
         
-        def make_chart_1w(base_price):
-            np.random.seed(168)
-            prices = np.linspace(1500, 3200, 50)
-            longs = [np.random.uniform(10, 80) if p < base_price else 0 for p in prices]
-            shorts = [np.random.uniform(10, 95) if p > base_price else 0 for p in prices]
-            
+        def make_real_asks_chart(df, current_price):
             fig = go.Figure()
-            fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
-            fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#00C853", name="Shorts"))
-            fig.add_vline(x=base_price, line_dash="dash", line_color="white")
-            fig.add_annotation(x=base_price, y=100, text=f"agora {base_price:,.1f}", showarrow=False, font=dict(color="white"))
-            fig.add_annotation(x=2160, y=50, text="Δ vácuo 2.120-2.200", showarrow=False, font=dict(color="#FFD54F", size=10))
-            
+            if not df.empty:
+                fig.add_trace(go.Bar(
+                    x=df["px"], y=df["sz"], 
+                    marker_color="#FF7043", 
+                    name="Ordens de Venda (Asks)"
+                ))
+            fig.add_vline(x=current_price, line_dash="dash", line_color="#00FF66", annotation_text=f"Preço Atual: {current_price:,.2f}")
             fig.update_layout(
                 template="plotly_dark", paper_bgcolor="#0c0e12", plot_bgcolor="#0c0e12",
                 height=360, margin=dict(t=20, b=20, l=30, r=30), showlegend=False,
-                xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
-                yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="US$ 200,0 mi")
+                xaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="Preço (US$)"),
+                yaxis=dict(gridcolor="rgba(255,255,255,0.05)", title="Tamanho da Ordem (Size)")
             )
             return fig
             
-        st.plotly_chart(make_chart_1w(price), use_container_width=True)
-        m_l1w, m_s1w = st.columns(2)
-        m_l1w.caption("▼ longs US$ 995,6 mi (est.)")
-        m_s1w.caption("shorts US$ 1,26 bi (est.) ▲")
+        st.plotly_chart(make_real_asks_chart(df_asks, price), use_container_width=True)
 
 elif pagina == "📈 Stacks, Liquidações & Books":
     st.title("⚡ Hyperliquid - Painel Quantitativo Profissional")
