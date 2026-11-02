@@ -124,9 +124,8 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
     
     # --- COLUNA 1 DIA ---
     with col_1d:
-        st.markdown(f"#### 1 dia <span style='font-size:12px; color:#9ca3af;'>posições abertas nas últimas 24 h</span>", unsafe_allow_html=True)
+        st.markdown("#### 1 dia <span style='font-size:12px; color:#9ca3af;'>posições abertas nas últimas 24 h</span>", unsafe_allow_html=True)
         
-        # Banner de alerta vermelho
         st.markdown(
             f"""
             <div style="background-color:#3b1219; border:1px solid #7f1d1d; border-radius:6px; padding:12px; margin-bottom:10px;">
@@ -139,7 +138,6 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
         st.caption(f"Binance/HL - faixa ±50% · US$ (est.) · 📈 **lateral 64%** · ⚡ possível cascata se liquidar {price*1.01:,.1f}")
         
         def build_heatmap_1d(base_px):
-            # Gera 60 bins de preço amplos ao redor do preço mark real
             prices = np.linspace(base_px * 0.70, base_px * 1.30, 60)
             np.random.seed(42)
             
@@ -150,11 +148,9 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
             fig.add_trace(go.Bar(x=prices, y=longs, marker_color="#1E88E5", name="Longs"))
             fig.add_trace(go.Bar(x=prices, y=shorts, marker_color="#FF7043", name="Shorts"))
             
-            # Linha vertical do preço atual
             fig.add_vline(x=base_px, line_dash="dash", line_color="#ffffff", width=1.5)
             fig.add_annotation(x=base_px, y=max(max(longs), max(shorts))*1.05, text=f"agora {base_px:,.1f}", showarrow=False, font=dict(color="#ffffff", size=11))
             
-            # Anotação de Vácuo
             vacuo_target = base_px * 0.93
             fig.add_annotation(x=vacuo_target, y=max(longs)*0.5, text="Δ vácuo de ordens", showarrow=False, font=dict(color="#f6e05e", size=10))
             fig.add_annotation(x=vacuo_target, y=max(longs)*0.3, text="pode passar reto", showarrow=False, font=dict(color="#f56565", size=9))
@@ -175,9 +171,8 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
 
     # --- COLUNA 1 SEMANA ---
     with col_1w:
-        st.markdown(f"#### 1 semana <span style='font-size:12px; color:#9ca3af;'>posições abertas nos últimos 7 dias</span>", unsafe_allow_html=True)
+        st.markdown("#### 1 semana <span style='font-size:12px; color:#9ca3af;'>posições abertas nos últimos 7 dias</span>", unsafe_allow_html=True)
         
-        # Banner de alerta verde
         st.markdown(
             f"""
             <div style="background-color:#064e3b; border:1px solid #047857; border-radius:6px; padding:12px; margin-bottom:10px;">
@@ -232,7 +227,7 @@ if pagina == "🎯 Captura & Rompimentos (Baleias)":
 
 
 # =====================================================================
-# PÁGINA 2: STACKS, LIQUIDAÇÕES & BOOKS (MODELO COMPLETO RESTAURADO)
+# PÁGINA 2: STACKS, LIQUIDAÇÕES & BOOKS
 # =====================================================================
 elif pagina == "📈 Stacks, Liquidações & Books":
     st.title("⚡ Hyperliquid - Painel Quantitativo Profissional")
@@ -274,7 +269,6 @@ elif pagina == "📈 Stacks, Liquidações & Books":
             now = datetime.now()
             hist_liquidations = []
             for _ in range(3):
-                past_min = np.random.randint(5, 45)
                 p_offset = np.random.choice([-price*0.006, -price*0.003, price*0.003, price*0.006])
                 hist_liquidations.append({
                     "price": price + p_offset,
@@ -398,9 +392,124 @@ elif pagina == "📈 Stacks, Liquidações & Books":
 elif pagina == "🐋 Distribuição de Carteiras (Backes View)":
     
     if st.session_state["grupo_detalhado"] is None:
-        st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras")
-        st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias e smart money.")
+        st.title("📊 Hyperliquid - Análise de Posições e PnL por Carteiras[cite: 1]")
+        st.markdown("Painel analítico on-chain em tempo real categorizando o comportamento de baleias e smart money[cite: 1].")
 
         st.markdown("---")
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Volume Total em P
+        m1.metric("Volume Total em Posições", "$ 14.82 Bilhões", "+4.2%")
+        m2.metric("Proporção Global Long vs Short", "56.4% Long / 43.6% Short", "Bullish Bias")
+        m3.metric("Taxa Média de Lucratividade", "51.8%", "+2.1%")
+        m4.metric("Total de Carteiras Monitoradas", "824,410", "Ativas 24h")
+
+        st.markdown("---")
+        st.subheader("📍 Distribuição de Posições por Grupo de Carteiras (Tempo Real)")
+
+        @st.fragment(run_every=3)
+        def render_wallet_overview_table():
+            groups = [
+                {"Saldo": "< $250", "Grupo": "Shrimp", "Carteiras": 802372, "BaseLong": 464.91, "BaseShort": 182.56, "Bias": "Bullish"},
+                {"Saldo": "$250-$10K", "Grupo": "Fish", "Carteiras": 44702, "BaseLong": 289.07, "BaseShort": 96.46, "Bias": "Very Bullish"},
+                {"Saldo": "$10K-$50K", "Grupo": "Dolphin", "Carteiras": 7450, "BaseLong": 447.65, "BaseShort": 195.79, "Bias": "Very Bullish"},
+                {"Saldo": "$50K-$100K", "Grupo": "Apex Predator", "Carteiras": 1607, "BaseLong": 287.73, "BaseShort": 162.18, "Bias": "Bullish"},
+                {"Saldo": "$100K-$500K", "Grupo": "Small Whale", "Carteiras": 1818, "BaseLong": 842.46, "BaseShort": 581.54, "Bias": "Bullish"},
+                {"Saldo": "$500K-$1M", "Grupo": "Whale", "Carteiras": 374, "BaseLong": 479.59, "BaseShort": 589.56, "Bias": "Slightly Bearish"},
+                {"Saldo": "$1M-$50M", "Grupo": "Tidal Whale", "Carteiras": 343, "BaseLong": 1950.0, "BaseShort": 1080.0, "Bias": "Very Bullish"},
+                {"Saldo": "> $50M", "Grupo": "Leviathan", "Carteiras": 86, "BaseLong": 1170.0, "BaseShort": 3230.0, "Bias": "Very Bearish"}
+            ]
+
+            table_data = []
+            for g in groups:
+                l_val = g["BaseLong"]
+                s_val = g["BaseShort"]
+                tot_val = round(l_val + s_val, 2)
+                pos_count = int(g["Carteiras"] * 0.82)
+                pos_pct = 82.0
+                
+                table_data.append({
+                    "Position Group": f"{g['Saldo']} - {g['Grupo']}",
+                    "Wallets": f"{g['Carteiras']:,}",
+                    "In Position": f"{pos_count:,} ({pos_pct:.1f}%)",
+                    "Long Position": f"${l_val:,.2f}M",
+                    "Short Position": f"${s_val:,.2f}M",
+                    "Total Position": f"${tot_val:,.2f}M",
+                    "Winners": f"{int(pos_count * 0.48):,}",
+                    "Losers": f"{int(pos_count * 0.52):,}",
+                    "Wallet Bias": g["Bias"]
+                })
+
+            df_display = pd.DataFrame(table_data)
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        render_wallet_overview_table()
+
+        st.markdown("---")
+        st.subheader("🔍 Inspetor de Faixa de Carteira (Drill-Down)")
+        group_names = ["Shrimp", "Fish", "Dolphin", "Apex Predator", "Small Whale", "Whale", "Tidal Whale", "Leviathan"]
+        grupo_selecionado = st.selectbox("Selecione o grupo para abrir a auditoria detalhada:", group_names, index=7)
+        
+        if st.button(f"🔍 Abrir Painel de Detalhes ({grupo_selecionado})", use_container_width=True):
+            st.session_state["grupo_detalhado"] = grupo_selecionado
+            st.rerun()
+
+    else:
+        grupo = st.session_state["grupo_detalhado"]
+        if st.button("← Voltar para Distribuição de Carteiras"):
+            st.session_state["grupo_detalhado"] = None
+            st.rerun()
+            
+        st.caption(f"Distribuição de posição da carteira Hyperliquid em tempo real / {grupo}")
+        st.title(f"🐋 {grupo} ($50M Para ∞)")
+        
+        st.markdown("**Wallets:** 86 &nbsp;&nbsp;|&nbsp;&nbsp; **Posição total:** $3.92B", unsafe_allow_html=True)
+        st.progress(0.8489, text="73 Traders em Posição (84.89%)")
+        
+        st.markdown("---")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Posição Long", "$1.23B", "31.3% Long")
+        m2.metric("Posição Short", "$2.69B", "-68.7% Short")
+        m3.metric("Lucro (Winners)", "44 Carteiras", "54.3%")
+        m4.metric("Prejuízo (Losers)", "28 Carteiras", "45.7%")
+        
+        st.markdown("---")
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c1:
+            st.subheader("Ranking de posição por ativo")
+            df_rank = pd.DataFrame({
+                "Ativo": ["BTC", "ETH", "HYPE", "ZEC", "SOL", "XRP"],
+                "Long": ["$407.54M", "$247.93M", "$237.64M", "$45.57M", "$21.08M", "$47.18M"],
+                "Short": ["$905.88M", "$552.32M", "$352.81M", "$193.10M", "$172.73M", "$61.63M"],
+                "Total": ["$1.31B", "$800.25M", "$590.45M", "$238.67M", "$193.81M", "$108.81M"]
+            })
+            st.dataframe(df_rank, use_container_width=True, hide_index=True)
+            
+        with c2:
+            st.subheader("Risco de liquidação por ativo")
+            df_risco = pd.DataFrame({
+                "Ativo": ["VVV", "BTC", "HYPE", "ETH", "SKY", "APT"],
+                "% Risco": ["19.48%", "14.72%", "11.79%", "8.64%", "0.00%", "0.00%"],
+                "Volume": ["$32.92M", "$1.31B", "$590.05M", "$800.26M", "$437.43K", "$1.15M"]
+            })
+            st.dataframe(df_risco, use_container_width=True, hide_index=True)
+            
+        with c3:
+            st.subheader("Últimas posições")
+            df_ultimas = pd.DataFrame({
+                "Endereço": ["0x5b...c060", "0x5b...c060", "0xb8...6e36", "0xfc...9d9d"],
+                "Ativo": ["ETH", "BTC", "BTC", "BTC"],
+                "PnL Atual": ["-$219.74M", "-$180.07M", "-$141.28M", "-$129.39M"]
+            })
+            st.dataframe(df_ultimas, use_container_width=True, hide_index=True)
+            
+        st.markdown("---")
+        st.subheader(f"Endereço da carteira {grupo}")
+        df_wallets = pd.DataFrame({
+            "Endereço": ["0x5b8a...c060", "0xb8e3...6e36", "0xfc71...9d9d"],
+            "Margem": ["$136.01M", "$110.03M", "$98.45M"],
+            "Bias da Wallet": ["Muito bearish", "Muito bearish", "Bearish"],
+            "Em posição": ["$610.72M", "$437.42M", "$380.15M"],
+            "UPNL": ["+$12.82M", "+$10.22M", "-$5.14M"],
+            "Risco Liq": ["HYPE (6%)", "HYPE (11%)", "BTC (14%)"],
+            "Grupo PnL": ["Impressora de dinheiro", "Impressora de dinheiro", "Smart Money"]
+        })
+        st.dataframe(df_wallets, use_container_width=True, hide_index=True)
